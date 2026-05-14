@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: photo-service
-        image: kwsumin01/photo-service:v1
+        image: fhwang98/photo-service:7d6cc5a8ac1265aea97154bbacdd8b9fed235f56
         ports:
         - containerPort: 5003
         envFrom:

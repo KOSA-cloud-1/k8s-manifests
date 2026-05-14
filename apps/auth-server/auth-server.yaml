@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: auth-server
-        image: kwsumin01/auth-server:v1
+        image: fhwang98/auth-server:7d6cc5a8ac1265aea97154bbacdd8b9fed235f56
         ports:
         - containerPort: 5001
 ---
