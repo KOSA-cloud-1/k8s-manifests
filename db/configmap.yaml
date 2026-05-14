@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mariadb-init
+data:
+  init.sql: |
+    USE employees;
+    ALTER TABLE employee
+      ADD COLUMN IF NOT EXISTS storage_type NVARCHAR(50) DEFAULT 'ceph',
+      ADD COLUMN IF NOT EXISTS backup_status TINYINT(1) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS upload_time DATETIME NULL,
+      ADD COLUMN IF NOT EXISTS last_access_time DATETIME DEFAULT now();
