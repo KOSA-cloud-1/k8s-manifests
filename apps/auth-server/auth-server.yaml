@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: auth-server
-        image: fhwang98/auth-server:7d6cc5a8ac1265aea97154bbacdd8b9fed235f56
+        image: fhwang98/auth-server:5ad6669e946565f57acfca316fe29abf97f2d80d
         ports:
         - containerPort: 5001
 ---
