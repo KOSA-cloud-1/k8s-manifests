@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: galera
+spec:
+  serviceName: galera          # 헤드리스 서비스 이름 (파드 DNS에 사용됨)
+  replicas: 3                  # Galera 최소 권장: 3대 (홀수여야 투표 가능)
+  selector:
+    matchLabels:
+      app: galera
+  template:
+    metadata:
+      labels:
+        app: galera
+    spec:
+      containers:
+      - name: mariadb
+        image: mariadb:10.11   # Galera가 기본 내장된 MariaDB
+        command: ["/bin/bash", "/scripts/start.sh"]   # 우리가 만든 시작 스크립트 실행
+        ports:
+        - containerPort: 3306  # MySQL 클라이언트 접속
+          name: mysql
+        - containerPort: 4444  # SST: 새 노드 합류 시 전체 데이터 복사
+          name: sst
+        - containerPort: 4567  # Galera 복제 통신 (TCP + UDP)
+          name: galera
+        - containerPort: 4568  # IST: 일부 데이터만 보내는 빠른 복제
+          name: ist
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: MYSQL_DATABASE
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/mysql                    # DB 데이터 저장 위치
+        - name: galera-cnf
+          mountPath: /etc/mysql/conf.d/galera.cnf      # Galera 설정 파일
+          subPath: galera.cnf
+        - name: init-sql
+          mountPath: /docker-entrypoint-initdb.d/init.sql  # 최초 기동 시 실행
+          subPath: init.sql
+        - name: scripts
+          mountPath: /scripts                          # 시작 스크립트 위치
+
+      volumes:
+      - name: galera-cnf
+        configMap:
+          name: galera-config
+          items:
+          - key: galera.cnf
+            path: galera.cnf
+      - name: init-sql
+        configMap:
+          name: galera-config
+          items:
+          - key: init.sql
+            path: init.sql
+      - name: scripts
+        configMap:
+          name: galera-config
+          defaultMode: 0755    # 실행 권한 부여 (chmod +x 역할)
+          items:
+          - key: start.sh
+            path: start.sh
+
+  # ── 각 파드마다 자동으로 PVC를 만들어 PV에 연결 ──────────────────
+  # 결과: data-galera-0, data-galera-1, data-galera-2 PVC 자동 생성
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      storageClassName: manual
+      resources:
+        requests:
+          storage: 5Gi

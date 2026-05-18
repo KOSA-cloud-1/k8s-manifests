@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: galera-config
+data:
+  galera.cnf: |
+    [mysqld]
+    binlog_format=ROW
+    default-storage-engine=innodb
+    innodb_autoinc_lock_mode=2
+    bind-address=0.0.0.0
+
+    wsrep_on=ON
+    wsrep_provider=/usr/lib/galera/libgalera_smm.so
+    wsrep_cluster_name=employees_galera
+    wsrep_cluster_address=gcomm://galera-0.galera.default.svc.cluster.local,galera-1.galera.default.svc.cluster.local,galera-2.galera.default.svc.cluster.local
+    wsrep_sst_method=rsync
+
+  init.sql: |
+    CREATE DATABASE IF NOT EXISTS employees;
+    USE employees;
+
+    CREATE TABLE IF NOT EXISTS employee (
+      id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      object_key NVARCHAR(80),
+      full_name NVARCHAR(200) NOT NULL,
+      location NVARCHAR(200) NOT NULL,
+      job_title NVARCHAR(200) NOT NULL,
+      badges NVARCHAR(200) NOT NULL,
+      created_datetime DATETIME DEFAULT NOW(),
+      storage_type NVARCHAR(50) DEFAULT 'ceph' COMMENT 'ceph 또는 aws',
+      backup_status TINYINT(1) DEFAULT 0 COMMENT '백업 여부 0=미완료 1=완료',
+      upload_time DATETIME NULL COMMENT '사진 업로드 시각',
+      last_access_time DATETIME DEFAULT NOW() COMMENT '마지막 조회 시각'
+    );
+
+  start.sh: |
+    #!/bin/bash
+    set -e
+
+    ORDINAL="${HOSTNAME##*-}"
+    echo ">>> [$HOSTNAME] 시작"
+
+    if [[ "$ORDINAL" == "0" ]]; then
+      if [[ ! -d "/var/lib/mysql/mysql" ]]; then
+        echo ">>> [galera-0] 최초 클러스터 부트스트랩"
+        exec docker-entrypoint.sh mysqld --wsrep-new-cluster
+      else
+        echo ">>> [galera-0] 재시작 - 클러스터 재합류"
+        exec docker-entrypoint.sh mysqld
+      fi
+    else
+      echo ">>> [$HOSTNAME] galera-0 DNS 대기 중..."
+      until getent hosts galera-0.galera.default.svc.cluster.local > /dev/null 2>&1; do
+        echo "    galera-0 DNS 미응답, 5초 후 재시도..."
+        sleep 5
+      done
+
+      echo ">>> [$HOSTNAME] galera-0 MySQL 대기 중..."
+      until mysqladmin ping -h galera-0.galera.default.svc.cluster.local \
+            -u root -p"${MYSQL_ROOT_PASSWORD}" --silent 2>/dev/null; do
+        echo "    galera-0 MySQL 미응답, 5초 후 재시도..."
+        sleep 5
+      done
+
+      echo ">>> [$HOSTNAME] 클러스터 합류"
+      exec docker-entrypoint.sh mysqld
+    fi

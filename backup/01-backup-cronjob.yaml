@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: photo-backup
+spec:
+  # 매일 새벽 2시에 실행 (cron 표현식)
+  # 형식: "분 시 일 월 요일"
+  schedule: "0 2 * * *"
+
+  # 이전 작업이 아직 실행 중이면 건너뜀
+  concurrencyPolicy: Forbid
+
+  # 완료된 Job 보관 개수
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: backup
+            image: kwsumin01/photo-backup:v1   # ← 본인 Docker Hub 이미지로 변경
+            env:
+            # DB 접속 정보
+            - name: DATABASE_HOST
+              value: mysql
+            - name: DATABASE_USER
+              value: root
+            - name: DATABASE_DB_NAME
+              value: employees
+            envFrom:
+            # Ceph 접속 정보 (기존 secret 재사용)
+            - secretRef:
+                name: ceph-secret
+            # MariaDB 비밀번호
+            - secretRef:
+                name: mariadb-secret
+            # AWS S3 접속 정보
+            - secretRef:
+                name: aws-secret

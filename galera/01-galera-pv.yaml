@@ -1,0 +1,95 @@
+# ════════════════════════════════════════════════════════════════
+# Galera PV 구성
+#
+# 워커 1대 기본 구성: 모든 PV를 worker1에 생성
+# 워커 2대 구성 시:  galera-pv-1을 GALERA_NODE_W2로 분산 가능
+#
+# 구조 (1대 기준):
+#   worker1
+#     ├── /mnt/data/galera/node0  ← galera-0 전용
+#     ├── /mnt/data/galera/node1  ← galera-1 전용
+#     └── /mnt/data/galera/node2  ← galera-2 전용
+#
+# 플레이스홀더 (deploy.sh가 자동 치환):
+#   GALERA_NODE_W1 → 감지된 worker1 이름
+# ════════════════════════════════════════════════════════════════
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: galera-pv-0
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    path: /mnt/data/galera/node0
+    type: DirectoryOrCreate
+  claimRef:
+    name: data-galera-0
+    namespace: default
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - GALERA_NODE_W1
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: galera-pv-1
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    path: /mnt/data/galera/node1
+    type: DirectoryOrCreate
+  claimRef:
+    name: data-galera-1
+    namespace: default
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - GALERA_NODE_W1
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: galera-pv-2
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    path: /mnt/data/galera/node2
+    type: DirectoryOrCreate
+  claimRef:
+    name: data-galera-2
+    namespace: default
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - GALERA_NODE_W1
