@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: employee-server
-        image: fhwang98/employee-server:5ad6669e946565f57acfca316fe29abf97f2d80d
+        image: kwsumin01/employee-server:v2
         ports:
         - containerPort: 5002
         env:
