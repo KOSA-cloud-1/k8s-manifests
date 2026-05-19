@@ -12,6 +12,13 @@ spec:
       labels:
         app: nginx
     spec:
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app: nginx
       containers:
       - name: nginx
         image: kwsumin01/nginx:v1
