@@ -24,7 +24,7 @@ spec:
                 - worker2
       containers:
       - name: photo-service
-        image: kosa1team/photo-service:723b9a3aef584ff50f750b713b54f4004e147254
+        image: kosa1team/photo-service:21970f8f5e10940e367f045339722cd338230831
         imagePullPolicy: Always
         ports:
         - containerPort: 5003
