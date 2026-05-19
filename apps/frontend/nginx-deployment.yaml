@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: kwsumin01/nginx:v1
+        image: kwsumin01/nginx:v2
         ports:
         - containerPort: 80
