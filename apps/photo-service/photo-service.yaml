@@ -24,7 +24,7 @@ spec:
                 - worker2
       containers:
       - name: photo-service
-        image: fhwang98/photo-service:aa434b33d02c0f45bcd0c5f2e520c7c8ad4e93a6
+        image: kosa1team/photo-service:00d440438f3f45b9bafd5ddd38174d2680b4b1cf
         imagePullPolicy: Always
         ports:
         - containerPort: 5003
