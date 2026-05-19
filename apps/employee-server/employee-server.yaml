@@ -21,7 +21,7 @@ spec:
             app: employee-server
       containers:
       - name: employee-server
-        image: kwsumin01/employee-server:v3
+        image: fhwang98/employee-server:aa434b33d02c0f45bcd0c5f2e520c7c8ad4e93a6
         ports:
         - containerPort: 5002
         livenessProbe:

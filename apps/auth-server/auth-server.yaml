@@ -21,7 +21,7 @@ spec:
             app: auth-server
       containers:
       - name: auth-server
-        image: fhwang98/auth-server:a0434e2db7f5ee9f272db7699337b749798484ab
+        image: fhwang98/auth-server:aa434b33d02c0f45bcd0c5f2e520c7c8ad4e93a6
         ports:
         - containerPort: 5001
         livenessProbe:
