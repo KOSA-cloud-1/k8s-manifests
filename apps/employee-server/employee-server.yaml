@@ -12,6 +12,13 @@ spec:
       labels:
         app: employee-server
     spec:
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app: employee-server
       containers:
       - name: employee-server
         image: kwsumin01/employee-server:v3
