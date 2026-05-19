@@ -13,6 +13,15 @@ spec:
       labels:
         app: galera
     spec:
+      nodeSelector:
+        db-role: galera
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: galera
+            topologyKey: kubernetes.io/hostname
       containers:
       - name: mariadb
         image: mariadb:10.11   # Galera가 기본 내장된 MariaDB
