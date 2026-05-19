@@ -12,6 +12,13 @@ spec:
       labels:
         app: auth-server
     spec:
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app: auth-server
       containers:
       - name: auth-server
         image: fhwang98/auth-server:5ad6669e946565f57acfca316fe29abf97f2d80d
