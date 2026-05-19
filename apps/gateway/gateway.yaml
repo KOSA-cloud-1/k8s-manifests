@@ -26,7 +26,7 @@ spec:
             app: gateway
       containers:
       - name: gateway
-        image: kwsumin01/gateway:v2
+        image: fhwang98/gateway:12c561be5291bda38566096cdd8e672a6ec28c4f
         ports:
         - containerPort: 5000
 ---
