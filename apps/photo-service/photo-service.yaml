@@ -28,6 +28,31 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 5003
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 5003
+          failureThreshold: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5003
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 5003
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
         envFrom:
         - secretRef:
             name: ceph-secret
