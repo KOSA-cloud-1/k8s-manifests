@@ -1,0 +1,89 @@
+# Values for prometheus-community/kube-prometheus-stack.
+# Install with:
+# helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+#   --namespace monitoring --create-namespace \
+#   --version 85.2.0 \
+#   -f monitoring/kube-prometheus-stack-values.yaml
+
+fullnameOverride: kube-prometheus-stack
+
+crds:
+  enabled: true
+
+defaultRules:
+  create: true
+
+grafana:
+  enabled: true
+  adminUser: admin
+  defaultDashboardsEnabled: true
+
+  service:
+    type: LoadBalancer
+    port: 80
+    targetPort: 3000
+
+  persistence:
+    enabled: false
+
+  sidecar:
+    dashboards:
+      enabled: true
+      searchNamespace: ALL
+    datasources:
+      enabled: true
+      defaultDatasourceEnabled: true
+
+alertmanager:
+  enabled: true
+  service:
+    type: ClusterIP
+  alertmanagerSpec:
+    retention: 120h
+
+prometheus:
+  service:
+    type: ClusterIP
+  prometheusSpec:
+    retention: 15d
+    retentionSize: 24GB
+
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        memory: 2Gi
+
+    serviceMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorNamespaceSelector: {}
+    serviceMonitorSelector: {}
+
+    podMonitorSelectorNilUsesHelmValues: false
+    podMonitorNamespaceSelector: {}
+    podMonitorSelector: {}
+
+    probeSelectorNilUsesHelmValues: false
+    probeNamespaceSelector: {}
+    probeSelector: {}
+
+    ruleSelectorNilUsesHelmValues: false
+    ruleNamespaceSelector: {}
+    ruleSelector: {}
+
+    scrapeConfigSelectorNilUsesHelmValues: false
+    scrapeConfigNamespaceSelector: {}
+    scrapeConfigSelector: {}
+
+prometheusOperator:
+  enabled: true
+  admissionWebhooks:
+    enabled: true
+    patch:
+      enabled: true
+
+kubeStateMetrics:
+  enabled: true
+
+nodeExporter:
+  enabled: true

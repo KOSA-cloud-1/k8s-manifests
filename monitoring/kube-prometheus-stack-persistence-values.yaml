@@ -1,0 +1,72 @@
+# Optional persistence overlay.
+# This overlay pins Prometheus, Alertmanager, and Grafana to the dedicated
+# monitoring node and stores their data on static local PersistentVolumes from
+# `monitoring/local-storage.yaml`.
+#
+# helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+#   --namespace monitoring --create-namespace \
+#   --version 85.2.0 \
+#   -f monitoring/kube-prometheus-stack-values.yaml \
+#   -f monitoring/kube-prometheus-stack-persistence-values.yaml
+#
+# For a 100Gi monitoring node disk, this overlay advertises:
+#   Prometheus: 30Gi
+#   Grafana: 5Gi
+#   Alertmanager: 2Gi
+
+grafana:
+  nodeSelector:
+    dedicated: monitoring
+  tolerations:
+    - key: dedicated
+      operator: Equal
+      value: monitoring
+      effect: NoSchedule
+  persistence:
+    enabled: true
+    type: pvc
+    existingClaim: grafana-storage
+
+alertmanager:
+  alertmanagerSpec:
+    nodeSelector:
+      dedicated: monitoring
+    tolerations:
+      - key: dedicated
+        operator: Equal
+        value: monitoring
+        effect: NoSchedule
+    storage:
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          storageClassName: monitoring-local
+          selector:
+            matchLabels:
+              monitoring.kosa.io/component: alertmanager
+          resources:
+            requests:
+              storage: 2Gi
+
+prometheus:
+  prometheusSpec:
+    nodeSelector:
+      dedicated: monitoring
+    tolerations:
+      - key: dedicated
+        operator: Equal
+        value: monitoring
+        effect: NoSchedule
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          storageClassName: monitoring-local
+          selector:
+            matchLabels:
+              monitoring.kosa.io/component: prometheus
+          resources:
+            requests:
+              storage: 30Gi
