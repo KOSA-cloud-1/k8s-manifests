@@ -26,7 +26,7 @@ spec:
             app: gateway
       containers:
       - name: gateway
-        image: kosa1team/gateway:543f82c6fa2a3a9425e1e05f565ac45f71e479aa
+        image: kosa1team/gateway:f884ec84ee22cab0bbaa51e65871d2eb1f662cba
         ports:
         - containerPort: 5000
         livenessProbe:
