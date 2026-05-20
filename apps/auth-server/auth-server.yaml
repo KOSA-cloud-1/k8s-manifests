@@ -21,7 +21,7 @@ spec:
             app: auth-server
       containers:
       - name: auth-server
-        image: kosa1team/auth-server:00d440438f3f45b9bafd5ddd38174d2680b4b1cf
+        image: kosa1team/auth-server:b3b4cc8458de68a155f3eb464b59e2e3b797b099
         ports:
         - containerPort: 5001
         livenessProbe:

@@ -21,7 +21,7 @@ spec:
             app: employee-server
       containers:
       - name: employee-server
-        image: kosa1team/employee-server:00d440438f3f45b9bafd5ddd38174d2680b4b1cf
+        image: kosa1team/employee-server:b3b4cc8458de68a155f3eb464b59e2e3b797b099
         ports:
         - containerPort: 5002
         livenessProbe:
