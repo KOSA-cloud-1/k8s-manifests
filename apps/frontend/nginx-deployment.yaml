@@ -21,7 +21,7 @@ spec:
             app: nginx
       containers:
       - name: nginx
-        image: kwsumin01/nginx:v2
+        image: kwsumin01/nginx:latest
         ports:
         - containerPort: 80
         livenessProbe:
