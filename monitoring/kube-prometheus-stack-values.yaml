@@ -15,13 +15,22 @@ defaultRules:
 
 grafana:
   enabled: true
-  adminUser: admin
+  admin:
+    existingSecret: grafana-admin-secret
+    userKey: admin-user
+    passwordKey: admin-password
   defaultDashboardsEnabled: true
 
   service:
     type: LoadBalancer
     port: 80
     targetPort: 3000
+    annotations:
+      metallb.universe.tf/loadBalancerIPs: 172.17.128.242
+
+  grafana.ini:
+    server:
+      root_url: "http://172.17.128.242"
 
   persistence:
     enabled: false
@@ -40,6 +49,7 @@ alertmanager:
     type: ClusterIP
   alertmanagerSpec:
     retention: 120h
+    configSecret: alertmanager-config-secret
 
 prometheus:
   service:
@@ -47,6 +57,7 @@ prometheus:
   prometheusSpec:
     retention: 15d
     retentionSize: 24GB
+    walCompression: true
 
     resources:
       requests:
