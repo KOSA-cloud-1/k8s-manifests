@@ -38,6 +38,17 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 5
           failureThreshold: 3
+        env:
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: JWT_SECRET_KEY
+        - name: ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: ADMIN_PASSWORD
 ---
 apiVersion: v1
 kind: Service
