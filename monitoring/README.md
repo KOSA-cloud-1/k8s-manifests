@@ -108,7 +108,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: example-app
-  namespace: default
+  namespace: apps
 spec:
   selector:
     matchLabels:

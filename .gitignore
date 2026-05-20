@@ -1,1 +1,12 @@
+# Local cleartext secret material. Keep these out of Git.
+secret.txt
+secret/
+*.env
+.env
+*.secret.yaml
+*-raw-secret.yaml
+
+# Raw Kubernetes Secret manifests are intentionally ignored. Use
+# ExternalSecret/ClusterSecretStore manifests for GitOps-managed secrets.
 *secret.yaml
+!external-secrets/**/*.yaml

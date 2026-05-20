@@ -1,0 +1,10 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: galera
+  namespace: data
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: galera

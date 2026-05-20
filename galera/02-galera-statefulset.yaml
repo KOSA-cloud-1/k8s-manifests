@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: galera
+  namespace: data
 spec:
   serviceName: galera          # 헤드리스 서비스 이름 (파드 DNS에 사용됨)
   replicas: 3                  # Galera 최소 권장: 3대 (홀수여야 투표 가능)
@@ -13,6 +14,7 @@ spec:
       labels:
         app: galera
     spec:
+      automountServiceAccountToken: false
       nodeSelector:
         db-role: galera
       affinity:
@@ -22,6 +24,12 @@ spec:
               matchLabels:
                 app: galera
             topologyKey: kubernetes.io/hostname
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        fsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: mariadb
         image: mariadb:10.11   # Galera가 기본 내장된 MariaDB
@@ -35,6 +43,47 @@ spec:
           name: galera
         - containerPort: 4568  # IST: 일부 데이터만 보내는 빠른 복제
           name: ist
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+              - ALL
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 2000m
+            memory: 2Gi
+        startupProbe:
+          exec:
+            command:
+            - sh
+            - -ec
+            - mysqladmin ping -h 127.0.0.1 -u root -p"$MYSQL_ROOT_PASSWORD" --silent
+          failureThreshold: 60
+          periodSeconds: 5
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -ec
+            - mysqladmin ping -h 127.0.0.1 -u root -p"$MYSQL_ROOT_PASSWORD" --silent
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -ec
+            - |
+              mysql -N -s -u root -p"$MYSQL_ROOT_PASSWORD" \
+                -e "SHOW STATUS LIKE 'wsrep_ready';" | awk '{exit ($2 == "ON" ? 0 : 1)}'
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          failureThreshold: 3
         env:
         - name: MYSQL_ROOT_PASSWORD
           valueFrom:
@@ -87,7 +136,7 @@ spec:
     spec:
       accessModes:
         - ReadWriteOnce
-      storageClassName: manual
+      storageClassName: ceph-rbd
       resources:
         requests:
           storage: 5Gi

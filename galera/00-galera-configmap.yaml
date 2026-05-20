@@ -2,6 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: galera-config
+  namespace: data
 data:
   galera.cnf: |
     [mysqld]
@@ -13,7 +14,7 @@ data:
     wsrep_on=ON
     wsrep_provider=/usr/lib/galera/libgalera_smm.so
     wsrep_cluster_name=employees_galera
-    wsrep_cluster_address=gcomm://galera-0.galera.default.svc.cluster.local,galera-1.galera.default.svc.cluster.local,galera-2.galera.default.svc.cluster.local
+    wsrep_cluster_address=gcomm://galera-0.galera.data.svc.cluster.local,galera-1.galera.data.svc.cluster.local,galera-2.galera.data.svc.cluster.local
     wsrep_sst_method=rsync
 
   init.sql: |
@@ -51,13 +52,13 @@ data:
       fi
     else
       echo ">>> [$HOSTNAME] galera-0 DNS 대기 중..."
-      until getent hosts galera-0.galera.default.svc.cluster.local > /dev/null 2>&1; do
+      until getent hosts galera-0.galera.data.svc.cluster.local > /dev/null 2>&1; do
         echo "    galera-0 DNS 미응답, 5초 후 재시도..."
         sleep 5
       done
 
       echo ">>> [$HOSTNAME] galera-0 MySQL 대기 중..."
-      until mysqladmin ping -h galera-0.galera.default.svc.cluster.local \
+      until mysqladmin ping -h galera-0.galera.data.svc.cluster.local \
             -u root -p"${MYSQL_ROOT_PASSWORD}" --silent 2>/dev/null; do
         echo "    galera-0 MySQL 미응답, 5초 후 재시도..."
         sleep 5
