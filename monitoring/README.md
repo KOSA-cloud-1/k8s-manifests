@@ -140,6 +140,41 @@ helm uninstall kube-prometheus-stack -n monitoring
 
 PVC와 CRD는 데이터 보호를 위해 남을 수 있습니다. 완전 삭제가 필요할 때만 PVC/CRD를 별도로 확인한 뒤 지웁니다.
 
+## 초기화 (완전 재설치)
+
+```bash
+# 1. Helm 릴리즈 삭제
+helm uninstall kube-prometheus-stack -n monitoring 2>/dev/null || true
+helm uninstall loki               -n monitoring 2>/dev/null || true
+helm uninstall promtail           -n monitoring 2>/dev/null || true
+
+# 2. PVC 삭제 (helm uninstall 후에도 남음)
+kubectl delete pvc -n monitoring --all
+
+# 3. PV 삭제 (reclaimPolicy: Retain 이라 PVC 삭제 후에도 남음)
+kubectl delete pv monitoring-prometheus-pv \
+                   monitoring-alertmanager-pv \
+                   monitoring-grafana-pv \
+                   monitoring-loki-pv 2>/dev/null || true
+
+# 4. monitoring 노드에서 데이터 디렉터리 초기화 (노드에 ssh 접속 후)
+sudo rm -rf /mnt/monitoring/prometheus/* \
+            /mnt/monitoring/alertmanager/* \
+            /mnt/monitoring/grafana/* \
+            /mnt/monitoring/loki/*
+
+# 5. ConfigMap (Loki 데이터소스) 삭제
+kubectl delete configmap loki-grafana-datasource -n monitoring 2>/dev/null || true
+
+# 6. ExternalSecret 이 생성한 Secret 삭제
+kubectl delete secret grafana-admin-secret alertmanager-config-secret -n monitoring 2>/dev/null || true
+
+# 7. StorageClass/PV 재생성 (local-storage.yaml 재적용)
+kubectl apply -f monitoring/local-storage.yaml
+```
+
+재설치는 [설치](#설치) 섹션부터 다시 진행합니다.
+
 ---
 
 # Loki + Promtail
