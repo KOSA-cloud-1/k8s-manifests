@@ -22,15 +22,13 @@ grafana:
   defaultDashboardsEnabled: true
 
   service:
-    type: LoadBalancer
+    # Bootstrap starts as NodePort. After MetalLB is healthy, switch this to
+    # LoadBalancer, restore the MetalLB annotation, and set root_url to the LB IP.
+    type: NodePort
     port: 80
     targetPort: 3000
-    annotations:
-      metallb.io/loadBalancerIPs: 172.17.128.242
-
-  grafana.ini:
-    server:
-      root_url: "http://172.17.128.242"
+    # annotations:
+    #   metallb.io/loadBalancerIPs: 172.17.128.242
 
   persistence:
     enabled: false

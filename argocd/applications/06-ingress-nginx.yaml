@@ -16,9 +16,11 @@ spec:
       values: |
         controller:
           service:
-            type: LoadBalancer
-            annotations:
-              metallb.io/loadBalancerIPs: 172.17.128.240
+            # Bootstrap starts as NodePort. After MetalLB is healthy, switch
+            # this to LoadBalancer and restore the MetalLB annotation below.
+            type: NodePort
+            # annotations:
+            #   metallb.io/loadBalancerIPs: 172.17.128.240
             externalTrafficPolicy: Local
   destination:
     server: 'https://kubernetes.default.svc'

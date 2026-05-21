@@ -97,6 +97,16 @@ mysql.data.svc.cluster.local
 
 ## Ingress And Load Balancer
 
+초기 bootstrap은 MetalLB가 아직 완전히 준비되지 않았을 수 있으므로 `NodePort`를 기본값으로 둡니다.
+현재 NodePort 기본값:
+
+- ArgoCD: `infra/argocd-server-service.yaml`
+- ingress-nginx: `argocd/applications/06-ingress-nginx.yaml`
+- Grafana: `monitoring/kube-prometheus-stack-values.yaml`
+
+MetalLB chart와 `infra/metallb-config.yaml`이 정상 동기화된 뒤, 위 파일들의 `type`을
+`LoadBalancer`로 바꾸고 주석 처리된 `metallb.io/loadBalancerIPs` annotation을 되살리면 됩니다.
+
 외부 흐름:
 
 ```text
@@ -126,10 +136,13 @@ MetalLB pool:
 Bootstrap:
 
 ```bash
-AWS_ACCESS_KEY_ID='<AWS_ACCESS_KEY_ID>' \
-AWS_SECRET_ACCESS_KEY='<AWS_SECRET_ACCESS_KEY>' \
+cp external-secrets/secrets.env.example external-secrets/secrets.env
+vi external-secrets/secrets.env
 bash deploy.sh
 ```
+
+`deploy.sh` loads `external-secrets/secrets.env`. To use another file, run
+`SECRETS_ENV_FILE=/path/to/secrets.env bash deploy.sh`.
 
 `argocd/argo-app.yaml`은 app-of-apps root Application입니다. 하위 Application은
 `argocd/applications/`에서 관리합니다.
@@ -137,17 +150,18 @@ bash deploy.sh
 동기화 순서:
 
 1. namespaces
-2. MetalLB
-3. External Secrets Operator
-4. ingress-nginx
-5. ExternalSecret/ClusterSecretStore
-6. Ceph CSI RBD
-7. StorageClass
-8. Galera
-9. apps
-10. infra
-11. backup
-12. monitoring local storage
+2. MetalLB chart
+3. MetalLB IP pool/L2Advertisement config
+4. External Secrets Operator
+5. ingress-nginx
+6. ExternalSecret/ClusterSecretStore
+7. Ceph CSI RBD
+8. StorageClass
+9. Galera
+10. apps
+11. infra
+12. backup
+13. monitoring local storage
 
 ## Bootstrap Script
 
@@ -157,9 +171,19 @@ bash deploy.sh
 - ArgoCD 설치
 - External Secrets Operator 설치
 - AWS Secrets Manager 접근용 bootstrap Secret 생성/갱신
+- ignored `external-secrets/secrets.env` 로드
+- AWS Secrets Manager 애플리케이션 Secret 생성/갱신
 - ExternalSecret 리소스 적용
+- ExternalSecret Ready 상태 대기
 - Ceph CSI RBD 설치
+- ArgoCD 서버 Service를 초기 NodePort 상태로 유지
 - ArgoCD root Application 적용
+
+이미 AWS Secrets Manager 값이 준비되어 있어 업로드 단계를 건너뛰려면
+`BOOTSTRAP_AWS_SECRETS=false bash deploy.sh`로 실행합니다. 이 경우에도
+`AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`가 있으면 ESO bootstrap Secret을 갱신하고,
+없으면 기존 `external-secrets/aws-secretsmanager-credentials` Secret을 사용합니다.
+ExternalSecret Ready 대기를 건너뛰려면 `WAIT_FOR_EXTERNAL_SECRETS=false`를 사용할 수 있습니다.
 
 ArgoCD CRD는 크기가 커서 `deploy.sh`가 server-side apply로 설치합니다. 수동 설치가 필요할 때도
 아래처럼 실행합니다.

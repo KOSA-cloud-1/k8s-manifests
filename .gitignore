@@ -2,7 +2,12 @@
 secret.txt
 secret/
 *.env
+*.env.*
+!*.env.example
 .env
+.env.*
+!.env.example
+external-secrets/secrets.env
 *.secret.yaml
 *-raw-secret.yaml
 # Actual alertmanager config (may contain Slack/SMTP secrets). Only the .example is committed.

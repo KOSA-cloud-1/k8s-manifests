@@ -8,7 +8,7 @@ Helm chart는 `prometheus-community/kube-prometheus-stack`을 사용합니다.
 - Kubernetes cluster
 - `kubectl`
 - Helm 3
-- Grafana를 `LoadBalancer` Service로 열기 때문에 bare-metal cluster라면 MetalLB가 먼저 동작해야 합니다.
+- Grafana는 bootstrap 기본값이 `NodePort`입니다. MetalLB가 준비된 뒤 `LoadBalancer`로 전환할 수 있습니다.
 - 기본 설정은 PVC 없이 설치됩니다. 영구 저장이 필요하면 StorageClass를 준비한 뒤 persistence overlay를 같이 적용합니다.
 
 ## 저장소 전략
@@ -50,13 +50,13 @@ kubectl get secret -n monitoring grafana-admin-secret \
   -o jsonpath="{.data.admin-password}" | base64 -d; echo
 ```
 
-Grafana 접속 주소는 LoadBalancer IP를 확인합니다.
+Grafana 접속 주소는 Service 타입에 따라 NodePort 또는 LoadBalancer IP를 확인합니다.
 
 ```bash
 kubectl get svc -n monitoring kube-prometheus-stack-grafana
 ```
 
-LoadBalancer IP가 없거나 임시로만 접속하려면 port-forward를 사용합니다.
+임시로만 접속하려면 port-forward를 사용합니다.
 
 ```bash
 kubectl -n monitoring port-forward svc/kube-prometheus-stack-grafana 3000:80
@@ -271,7 +271,7 @@ helm uninstall promtail -n monitoring
 3. 부트스트랩 스크립트로 AWS Secrets Manager에 업로드합니다.
 
    ```bash
-   set -a; . /tmp/kosa-secrets.env; set +a
+   set -a; . external-secrets/secrets.env; set +a
    external-secrets/bootstrap-aws-secrets.sh
    ```
 

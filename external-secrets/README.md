@@ -20,10 +20,14 @@ Use an IAM principal scoped to the exact Secrets Manager ARNs used by this
 project.
 
 ```bash
-AWS_ACCESS_KEY_ID='<AWS_ACCESS_KEY_ID>' \
-AWS_SECRET_ACCESS_KEY='<AWS_SECRET_ACCESS_KEY>' \
+cp external-secrets/secrets.env.example external-secrets/secrets.env
+vi external-secrets/secrets.env
 bash deploy.sh
 ```
+
+`deploy.sh` loads the ignored `external-secrets/secrets.env` file. The local
+file should contain real values; keep the tracked `.example` as a template
+unless you are intentionally editing defaults.
 
 Manual creation:
 
@@ -80,13 +84,14 @@ Notes:
 
 ## Create Or Update AWS Secrets
 
-Use `secrets.env.example` as a template and keep the real env file outside Git.
+Use `secrets.env.example` as a template and keep the real env file out of Git.
+The repo `.gitignore` ignores `external-secrets/secrets.env`.
 
 ```bash
-cp external-secrets/secrets.env.example /tmp/kosa-secrets.env
-vi /tmp/kosa-secrets.env
+cp external-secrets/secrets.env.example external-secrets/secrets.env
+vi external-secrets/secrets.env
 set -a
-. /tmp/kosa-secrets.env
+. external-secrets/secrets.env
 set +a
 
 external-secrets/bootstrap-aws-secrets.sh

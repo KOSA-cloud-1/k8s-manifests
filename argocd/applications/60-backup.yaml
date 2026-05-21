@@ -11,6 +11,8 @@ spec:
     repoURL: 'https://github.com/KOSA-cloud-1/k8s-manifests'
     targetRevision: feature/monitoring
     path: backup
+    directory:
+      include: '*.yaml'
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: backup

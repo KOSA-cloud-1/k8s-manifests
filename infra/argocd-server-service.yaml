@@ -3,10 +3,11 @@ kind: Service
 metadata:
   name: argocd-server
   namespace: argocd
-  annotations:
-    metallb.io/loadBalancerIPs: 172.17.128.241
 spec:
-  type: LoadBalancer
+  # Bootstrap starts as NodePort because MetalLB may not be ready yet.
+  # After MetalLB is healthy, switch this to LoadBalancer and add:
+  # metadata.annotations.metallb.io/loadBalancerIPs: 172.17.128.241
+  type: NodePort
   selector:
     app.kubernetes.io/name: argocd-server
   ports:

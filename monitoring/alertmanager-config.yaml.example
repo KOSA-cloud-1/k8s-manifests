@@ -11,7 +11,7 @@
 #        ALERTMANAGER_CONFIG_FILE=/tmp/alertmanager-config.yaml
 #
 #   4. Run the bootstrap script to upload the config to AWS Secrets Manager:
-#        set -a; . /tmp/kosa-secrets.env; set +a
+#        set -a; . external-secrets/secrets.env; set +a
 #        external-secrets/bootstrap-aws-secrets.sh
 #
 #   The ExternalSecret "alertmanager-config-secret" (namespace: monitoring) will sync

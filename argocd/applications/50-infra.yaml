@@ -13,6 +13,7 @@ spec:
     path: infra
     directory:
       recurse: true
+      exclude: 'metallb-config.yaml'
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: apps
