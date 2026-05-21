@@ -117,6 +117,21 @@ info "Applying namespaces"
 kubectl apply -f "$ROOT_DIR/namespaces/00-namespaces.yaml"
 kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
 
+# =========================================================
+# Node labels & taints
+# - monitoring stack (Prometheus/Grafana/Alertmanager/Loki) → worker7
+# - Galera DB → worker3, worker4, worker5
+# - photo-service는 kubernetes.io/hostname 기본 라벨 사용 (추가 작업 불필요)
+# =========================================================
+info "Applying node labels and taints"
+
+kubectl label node worker7 dedicated=monitoring --overwrite
+kubectl taint node worker7 dedicated=monitoring:NoSchedule --overwrite
+
+for node in worker3 worker4 worker5; do
+  kubectl label node "$node" db-role=galera --overwrite
+done
+
 if ! kubectl get crd applications.argoproj.io >/dev/null 2>&1 || \
    ! kubectl -n argocd get deployment argocd-server >/dev/null 2>&1; then
   info "Installing ArgoCD"
@@ -210,6 +225,15 @@ if kubectl get crd applications.argoproj.io >/dev/null 2>&1; then
   kubectl apply -f "$ROOT_DIR/argocd/argo-app.yaml"
 else
   die "ArgoCD CRD applications.argoproj.io not found after installation"
+fi
+
+ARGOCD_INIT_PW=$(kubectl -n argocd get secret argocd-initial-admin-secret \
+  -o jsonpath="{.data.password}" 2>/dev/null | base64 -d) || true
+
+if [[ -n "$ARGOCD_INIT_PW" ]]; then
+  info "ArgoCD initial admin password: $ARGOCD_INIT_PW"
+else
+  info "argocd-initial-admin-secret not found (already changed or deleted)"
 fi
 
 info "Bootstrap complete"
