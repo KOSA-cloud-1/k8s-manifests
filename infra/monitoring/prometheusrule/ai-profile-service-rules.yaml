@@ -1,10 +1,8 @@
 # AI Profile Service alert rules
 #
-# 주의: 아래 rule은 photo-service가 다음 커스텀 metric을 노출한다는 전제이다.
-#   - profile_image_failed_total
-#   - profile_image_processing_seconds_bucket
-# 현재 앱(app/photo-service/app.py)에는 /metrics 와 위 metric이 구현되어 있지 않아
-# 이 rule들은 앱 metrics 구현 전까지 발동하지 않는다. (README 11항 참고)
+# 이 rule이 참조하는 profile_image_* metric은 실제 photo-service 앱이 아니라
+# 시연용 synthetic exporter(infra/monitoring/fake-exporter/)가 노출한다.
+# (앱에 /metrics 가 없고 앱 코드를 수정할 수 없기 때문. README 참고)
 #
 # label "release: kube-prometheus-stack" 는 관례상 부여한다. 현재 클러스터의 Prometheus는
 # ruleSelector: {} / ruleSelectorNilUsesHelmValues: false 로 설정되어 있어 label과 무관하게
@@ -22,15 +20,21 @@ spec:
     - name: ai-profile-service.rules
       rules:
         - alert: PhotoServiceHighErrorRate
+          # 실패 비율(failed/requests)이 20%를 넘으면 발동.
+          # synthetic exporter 기본 FAILURE_RATIO=0.04(4%)에서는 발동하지 않으며,
+          # exporter env FAILURE_RATIO 를 올리면 발동을 시연할 수 있다.
           expr: |
-            sum(rate(profile_image_failed_total[5m])) > 0
+            sum(rate(profile_image_failed_total[5m]))
+            /
+            clamp_min(sum(rate(profile_image_requests_total[5m])), 1)
+            > 0.2
           for: 2m
           labels:
             severity: warning
             service: photo-service
           annotations:
-            summary: "Photo service image conversion errors detected"
-            description: "profile_image_failed_total increased during the last 5 minutes."
+            summary: "Photo service image conversion error ratio is high"
+            description: "Failure ratio (failed/requests) exceeded 20% over the last 5 minutes."
 
         - alert: PhotoServiceHighLatencyP95
           expr: |
@@ -44,12 +48,14 @@ spec:
             description: "P95 image processing latency is higher than 5 seconds for 5 minutes."
 
         - alert: PhotoServiceNoMetrics
+          # profile_image_* metric 자체가 사라지면 발동(synthetic exporter Down 등).
+          # job 라벨 이름에 의존하지 않도록 metric 부재(absent)로 판정한다.
           expr: |
-            absent(up{job=~".*photo-service.*"} == 1)
+            absent(profile_image_requests_total)
           for: 5m
           labels:
             severity: warning
             service: photo-service
           annotations:
             summary: "Photo service metrics are missing"
-            description: "Prometheus cannot scrape photo-service metrics (no /metrics endpoint or ServiceMonitor target down)."
+            description: "profile_image_* metrics are absent (fake-ai-profile-metrics-exporter down or not scraped)."

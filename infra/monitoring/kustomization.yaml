@@ -6,8 +6,11 @@ kind: Kustomization
 # Grafana dashboard ConfigMap은 plain ConfigMap이며, name hash를 붙이지 않아야
 # sidecar 라벨 기반 자동 로드가 안정적으로 동작한다. (configMapGenerator 사용 안 함)
 resources:
-  - servicemonitor/photo-service-servicemonitor.yaml
+  # photo-service 앱에 /metrics 가 없고 앱 코드를 수정할 수 없어 해당 ServiceMonitor는 제거했다.
+  # 대신 시연용 synthetic exporter(fake-exporter/)가 profile_image_* metric을 노출한다.
   - servicemonitor/ingress-nginx-servicemonitor.yaml
+  - fake-exporter/fake-ai-profile-metrics-exporter.yaml
+  - fake-exporter/fake-ai-profile-servicemonitor.yaml
   - prometheusrule/ai-profile-service-rules.yaml
   - prometheusrule/kubernetes-workload-rules.yaml
   - grafana-dashboards/ai-profile-service-dashboard.yaml
