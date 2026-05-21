@@ -52,7 +52,7 @@ prometheus:
     type: ClusterIP
   prometheusSpec:
     retention: 15d
-    retentionSize: 24GB
+    retentionSize: 90GB
     walCompression: true
 
     resources:

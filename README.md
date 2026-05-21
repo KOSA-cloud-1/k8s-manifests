@@ -83,10 +83,11 @@ mysql.data.svc.cluster.local
 요청대로 모니터링은 Ceph가 아니라 전용 monitoring node의 local PV에 저장합니다.
 현재 권장 기본값은 다음과 같습니다.
 
-- Prometheus: 15일 보존, `retentionSize: 24GB`, PV 30Gi
-- Grafana: PV 5Gi
-- Alertmanager: PV 2Gi
-- dedicated monitoring node: 100Gi 이상 권장
+- Prometheus: 15일 보존, `retentionSize: 90GB`, PV 100Gi
+- Loki: PV 60Gi
+- Grafana: PV 10Gi
+- Alertmanager: PV 5Gi
+- dedicated monitoring node: 200Gi 이상 권장
 
 아직 미정인 정책에 대한 제안:
 

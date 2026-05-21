@@ -23,7 +23,7 @@ singleBinary:
   persistence:
     enabled: true
     storageClass: monitoring-local
-    size: 10Gi
+    size: 60Gi
     selector:
       matchLabels:
         monitoring.kosa.io/component: loki
