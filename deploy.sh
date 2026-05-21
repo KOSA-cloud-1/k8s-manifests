@@ -156,6 +156,7 @@ helm upgrade --install external-secrets external-secrets/external-secrets \
 
 kubectl wait --for=condition=Established crd/clustersecretstores.external-secrets.io --timeout=120s
 kubectl wait --for=condition=Established crd/externalsecrets.external-secrets.io --timeout=120s
+kubectl -n external-secrets rollout status deployment/external-secrets-webhook --timeout=120s
 
 if [[ -n "${AWS_ACCESS_KEY_ID:-}" && -n "${AWS_SECRET_ACCESS_KEY:-}" ]]; then
   info "Creating or updating AWS Secrets Manager bootstrap credentials"
