@@ -21,6 +21,9 @@ grafana:
     passwordKey: admin-password
   defaultDashboardsEnabled: true
 
+  initChownData:
+    enabled: false
+
   service:
     type: LoadBalancer
     port: 80
