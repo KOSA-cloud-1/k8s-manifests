@@ -10,6 +10,7 @@ CEPH_MONITORS="${CEPH_MONITORS:-10.10.10.11:6789}"
 ARGOCD_INSTALL_URL="${ARGOCD_INSTALL_URL:-https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml}"
 BOOTSTRAP_AWS_SECRETS="${BOOTSTRAP_AWS_SECRETS:-true}"
 WAIT_FOR_EXTERNAL_SECRETS="${WAIT_FOR_EXTERNAL_SECRETS:-true}"
+PRINT_ARGOCD_INITIAL_PASSWORD="${PRINT_ARGOCD_INITIAL_PASSWORD:-true}"
 
 info() { printf '[INFO] %s\n' "$1"; }
 warn() { printf '[WARN] %s\n' "$1"; }
@@ -227,13 +228,17 @@ else
   die "ArgoCD CRD applications.argoproj.io not found after installation"
 fi
 
-ARGOCD_INIT_PW=$(kubectl -n argocd get secret argocd-initial-admin-secret \
-  -o jsonpath="{.data.password}" 2>/dev/null | base64 -d) || true
+if [[ "$PRINT_ARGOCD_INITIAL_PASSWORD" == "true" ]]; then
+  ARGOCD_INIT_PW=$(kubectl -n argocd get secret argocd-initial-admin-secret \
+    -o jsonpath="{.data.password}" 2>/dev/null | base64 -d) || true
 
-if [[ -n "$ARGOCD_INIT_PW" ]]; then
-  info "ArgoCD initial admin password: $ARGOCD_INIT_PW"
+  if [[ -n "$ARGOCD_INIT_PW" ]]; then
+    info "ArgoCD initial admin password: $ARGOCD_INIT_PW"
+  else
+    info "argocd-initial-admin-secret not found (already changed or deleted)"
+  fi
 else
-  info "argocd-initial-admin-secret not found (already changed or deleted)"
+  info "Skipping ArgoCD initial admin password output"
 fi
 
 info "Bootstrap complete"
