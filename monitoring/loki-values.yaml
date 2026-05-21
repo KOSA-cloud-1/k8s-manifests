@@ -1,0 +1,69 @@
+# Values for grafana/loki in singleBinary (monolithic) mode.
+#
+# Install with:
+#   helm repo add grafana https://grafana.github.io/helm-charts
+#   helm repo update
+#
+#   helm upgrade --install loki grafana/loki \
+#     --namespace monitoring --create-namespace \
+#     --version 6.29.0 \
+#     -f monitoring/loki-values.yaml
+#
+# With persistence overlay (monitoring node local disk):
+#   helm upgrade --install loki grafana/loki \
+#     --namespace monitoring --create-namespace \
+#     --version 6.29.0 \
+#     -f monitoring/loki-values.yaml \
+#     -f monitoring/loki-persistence-values.yaml
+
+loki:
+  auth_enabled: false
+
+  commonConfig:
+    replication_factor: 1
+
+  schemaConfig:
+    configs:
+      - from: "2024-01-01"
+        store: tsdb
+        object_store: filesystem
+        schema: v13
+        index:
+          prefix: index_
+          period: 24h
+
+  storage:
+    type: filesystem
+
+deploymentMode: SingleBinary
+
+singleBinary:
+  replicas: 1
+  persistence:
+    enabled: false
+
+# Disable distributed mode components
+backend:
+  replicas: 0
+read:
+  replicas: 0
+write:
+  replicas: 0
+
+# Disable bundled cache sidecars (not needed for single-node)
+chunksCache:
+  enabled: false
+resultsCache:
+  enabled: false
+
+# Disable self-monitoring (requires Loki itself to be running first)
+monitoring:
+  selfMonitoring:
+    enabled: false
+    grafanaAgent:
+      installOperator: false
+  lokiCanary:
+    enabled: false
+
+test:
+  enabled: false

@@ -1,24 +1,24 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: kosa-platform
+  name: kosa-monitoring-local-storage
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "40"
 spec:
   project: default
   source:
     repoURL: 'https://github.com/KOSA-cloud-1/k8s-manifests'
     targetRevision: dev
-    path: argocd/applications
+    path: monitoring
     directory:
-      recurse: true
+      include: 'local-storage.yaml'
   destination:
     server: 'https://kubernetes.default.svc'
-    namespace: argocd
+    namespace: monitoring
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
-      - CreateNamespace=true
-      - PrunePropagationPolicy=foreground  # 리소스 삭제 순서 보장
-      - ApplyOutOfSyncOnly=true   # 변경된 리소스만 apply (속도 향상)
+      - ApplyOutOfSyncOnly=true

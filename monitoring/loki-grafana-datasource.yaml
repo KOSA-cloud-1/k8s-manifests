@@ -1,0 +1,26 @@
+# Grafana datasource for Loki.
+# The Grafana sidecar (sidecar.datasources.enabled: true in kube-prometheus-stack-values.yaml)
+# watches for ConfigMaps with the grafana_datasource label and loads them automatically.
+#
+# Apply with:
+#   kubectl apply -f monitoring/loki-grafana-datasource.yaml
+#
+# ArgoCD will apply this automatically if the monitoring path includes it.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loki-grafana-datasource
+  namespace: monitoring
+  labels:
+    grafana_datasource: "1"
+data:
+  loki-datasource.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Loki
+        type: loki
+        url: http://loki:3100
+        access: proxy
+        isDefault: false
+        jsonData:
+          maxLines: 1000
