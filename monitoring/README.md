@@ -43,10 +43,10 @@ kubectl get svc -n monitoring
 kubectl get prometheus,alertmanager -n monitoring
 ```
 
-Grafana admin 비밀번호는 Helm chart가 Secret으로 생성합니다.
+Grafana admin 비밀번호는 ExternalSecret이 AWS Secrets Manager에서 동기화한 `grafana-admin-secret`에 있습니다.
 
 ```bash
-kubectl get secret -n monitoring kube-prometheus-stack-grafana \
+kubectl get secret -n monitoring grafana-admin-secret \
   -o jsonpath="{.data.admin-password}" | base64 -d; echo
 ```
 
@@ -139,3 +139,118 @@ helm uninstall kube-prometheus-stack -n monitoring
 ```
 
 PVC와 CRD는 데이터 보호를 위해 남을 수 있습니다. 완전 삭제가 필요할 때만 PVC/CRD를 별도로 확인한 뒤 지웁니다.
+
+---
+
+# Loki + Promtail
+
+Grafana Loki로 클러스터 전체 컨테이너 로그를 수집하고 Grafana에서 조회합니다.
+Promtail이 DaemonSet으로 모든 노드의 로그를 수집해 Loki로 전송합니다.
+
+## 설치
+
+```bash
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+
+helm upgrade --install loki grafana/loki \
+  --namespace monitoring --create-namespace \
+  --version 6.29.0 \
+  -f monitoring/loki-values.yaml
+
+helm upgrade --install promtail grafana/promtail \
+  --namespace monitoring --create-namespace \
+  --version 6.16.6 \
+  -f monitoring/promtail-values.yaml
+```
+
+## PVC 사용 (monitoring 노드 로컬 디스크)
+
+모니터링 노드에 Loki 디렉터리를 추가로 만듭니다.
+
+```bash
+sudo mkdir -p /mnt/monitoring/loki
+sudo chmod 0777 /mnt/monitoring/loki
+```
+
+`local-storage.yaml`에 이미 `monitoring-loki-pv` PV가 선언되어 있습니다.
+ArgoCD `kosa-monitoring-local-storage` 앱이 자동으로 적용합니다.
+
+PVC를 사용하는 Loki 설치:
+
+```bash
+helm upgrade --install loki grafana/loki \
+  --namespace monitoring --create-namespace \
+  --version 6.29.0 \
+  -f monitoring/loki-values.yaml \
+  -f monitoring/loki-persistence-values.yaml
+```
+
+## Grafana 데이터소스 등록
+
+```bash
+kubectl apply -f monitoring/loki-grafana-datasource.yaml
+```
+
+Grafana sidecar가 ConfigMap을 감지해 Loki 데이터소스를 자동으로 추가합니다.
+Grafana → Explore → 데이터소스를 Loki로 전환하면 로그를 조회할 수 있습니다.
+
+## 상태 확인
+
+```bash
+kubectl get pods -n monitoring -l app.kubernetes.io/name=loki
+kubectl get pods -n monitoring -l app.kubernetes.io/name=promtail
+kubectl logs -n monitoring -l app.kubernetes.io/name=promtail --tail=20
+```
+
+## 삭제
+
+```bash
+helm uninstall loki -n monitoring
+helm uninstall promtail -n monitoring
+```
+
+---
+
+# Alertmanager 설정
+
+`alertmanagerSpec.configSecret: alertmanager-config-secret`으로 지정된 Kubernetes Secret에서
+설정을 읽습니다. 이 Secret은 ExternalSecret `alertmanager-config-secret`이 AWS Secrets Manager
+`prod/monitoring/alertmanager`의 `alertmanager.yaml` 키에서 동기화합니다.
+
+## ALERTMANAGER_CONFIG_FILE 설정 방법
+
+1. 템플릿을 git 외부로 복사하고 수정합니다.
+
+   ```bash
+   cp monitoring/alertmanager-config.yaml.example /tmp/alertmanager-config.yaml
+   # 파일을 열어 Slack webhook URL 또는 SMTP 설정을 채웁니다.
+   ```
+
+2. `secrets.env`에 경로를 지정합니다.
+
+   ```bash
+   ALERTMANAGER_CONFIG_FILE=/tmp/alertmanager-config.yaml
+   ```
+
+3. 부트스트랩 스크립트로 AWS Secrets Manager에 업로드합니다.
+
+   ```bash
+   set -a; . /tmp/kosa-secrets.env; set +a
+   external-secrets/bootstrap-aws-secrets.sh
+   ```
+
+4. ExternalSecret을 강제 동기화합니다.
+
+   ```bash
+   kubectl annotate externalsecret alertmanager-config-secret \
+     -n monitoring \
+     force-sync=$(date +%s) --overwrite
+   ```
+
+5. Alertmanager Pod를 재시작해 새 설정을 반영합니다.
+
+   ```bash
+   kubectl rollout restart statefulset -n monitoring \
+     -l app.kubernetes.io/name=alertmanager
+   ```

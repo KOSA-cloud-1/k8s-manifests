@@ -5,6 +5,8 @@ secret/
 .env
 *.secret.yaml
 *-raw-secret.yaml
+# Actual alertmanager config (may contain Slack/SMTP secrets). Only the .example is committed.
+monitoring/alertmanager-config.yaml
 
 # Raw Kubernetes Secret manifests are intentionally ignored. Use
 # ExternalSecret/ClusterSecretStore manifests for GitOps-managed secrets.

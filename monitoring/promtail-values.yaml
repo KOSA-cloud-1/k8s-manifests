@@ -1,0 +1,26 @@
+# Values for grafana/promtail — runs as a DaemonSet on every node,
+# tails container logs, and pushes them to Loki.
+#
+# Install with:
+#   helm upgrade --install promtail grafana/promtail \
+#     --namespace monitoring --create-namespace \
+#     --version 6.16.6 \
+#     -f monitoring/promtail-values.yaml
+
+config:
+  clients:
+    - url: http://loki:3100/loki/api/v1/push
+
+  snippets:
+    # Add Kubernetes metadata labels to every log stream
+    pipelineStages:
+      - cri: {}
+      - labeldrop:
+          - filename
+
+tolerations:
+  # Allow Promtail to run on the tainted monitoring node as well
+  - key: dedicated
+    operator: Equal
+    value: monitoring
+    effect: NoSchedule

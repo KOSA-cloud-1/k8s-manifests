@@ -95,6 +95,31 @@ spec:
                 - monitoring
 ---
 apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: monitoring-loki-pv
+  labels:
+    monitoring.kosa.io/component: loki
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: monitoring-local
+  local:
+    path: /mnt/monitoring/loki
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: dedicated
+              operator: In
+              values:
+                - monitoring
+---
+apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: grafana-storage
