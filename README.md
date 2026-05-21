@@ -34,6 +34,8 @@ External Secrets Operator가 네임스페이스별 Kubernetes Secret을 생성�
 - `prod/monitoring/alertmanager`
 
 `external-secrets/aws-secretsmanager-credentials` Secret은 Git 밖에서 bootstrap합니다.
+`deploy.sh`는 `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` 환경변수가 있으면 이 Secret을
+자동으로 생성/갱신합니다.
 가능하면 static key보다 EC2 instance profile, IRSA, EKS Pod Identity, kube2iam 같은
 short-lived credential 방식을 우선 검토합니다.
 
@@ -124,7 +126,9 @@ MetalLB pool:
 Bootstrap:
 
 ```bash
-kubectl apply -f argocd/argo-app.yaml
+AWS_ACCESS_KEY_ID='<AWS_ACCESS_KEY_ID>' \
+AWS_SECRET_ACCESS_KEY='<AWS_SECRET_ACCESS_KEY>' \
+bash deploy.sh
 ```
 
 `argocd/argo-app.yaml`은 app-of-apps root Application입니다. 하위 Application은
@@ -150,9 +154,20 @@ kubectl apply -f argocd/argo-app.yaml
 `deploy.sh`는 운영 배포 스크립트가 아닙니다. 다음만 수행합니다.
 
 - namespace 생성
+- ArgoCD 설치
 - External Secrets Operator 설치
+- AWS Secrets Manager 접근용 bootstrap Secret 생성/갱신
 - ExternalSecret 리소스 적용
 - Ceph CSI RBD 설치
 - ArgoCD root Application 적용
+
+ArgoCD CRD는 크기가 커서 `deploy.sh`가 server-side apply로 설치합니다. 수동 설치가 필요할 때도
+아래처럼 실행합니다.
+
+```bash
+kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
+kubectl apply --server-side --force-conflicts -n argocd \
+  -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+```
 
 운영 변경은 Git commit/push와 ArgoCD sync를 통해 진행합니다.

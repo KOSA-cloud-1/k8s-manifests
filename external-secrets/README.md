@@ -15,8 +15,17 @@ helm upgrade --install external-secrets external-secrets/external-secrets \
   --set installCRDs=true
 ```
 
-Bootstrap the AWS credential Secret out of band. Use an IAM principal scoped to
-the exact Secrets Manager ARNs used by this project.
+Bootstrap the AWS credential Secret with `deploy.sh` or create it out of band.
+Use an IAM principal scoped to the exact Secrets Manager ARNs used by this
+project.
+
+```bash
+AWS_ACCESS_KEY_ID='<AWS_ACCESS_KEY_ID>' \
+AWS_SECRET_ACCESS_KEY='<AWS_SECRET_ACCESS_KEY>' \
+bash deploy.sh
+```
+
+Manual creation:
 
 ```bash
 kubectl -n external-secrets create secret generic aws-secretsmanager-credentials \

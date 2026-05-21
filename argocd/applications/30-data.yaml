@@ -9,7 +9,7 @@ spec:
   project: default
   source:
     repoURL: 'https://github.com/KOSA-cloud-1/k8s-manifests'
-    targetRevision: dev
+    targetRevision: feature/monitoring
     path: galera
     directory:
       recurse: true
