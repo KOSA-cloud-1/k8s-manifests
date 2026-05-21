@@ -9,7 +9,7 @@ spec:
   project: default
   source:
     repoURL: 'https://github.com/KOSA-cloud-1/k8s-manifests'
-    targetRevision: feature/monitoring
+    targetRevision: dev
     path: monitoring
     directory:
       include: 'local-storage.yaml'
