@@ -9,10 +9,10 @@
 #   -f monitoring/kube-prometheus-stack-values.yaml \
 #   -f monitoring/kube-prometheus-stack-persistence-values.yaml
 #
-# For a 100Gi monitoring node disk, this overlay advertises:
-#   Prometheus: 30Gi
-#   Grafana: 5Gi
-#   Alertmanager: 2Gi
+# For a 200Gi monitoring node disk, this overlay advertises:
+#   Prometheus: 100Gi
+#   Grafana: 10Gi
+#   Alertmanager: 5Gi
 
 grafana:
   nodeSelector:
@@ -47,7 +47,7 @@ alertmanager:
               monitoring.kosa.io/component: alertmanager
           resources:
             requests:
-              storage: 2Gi
+              storage: 5Gi
 
 prometheus:
   prometheusSpec:
@@ -69,4 +69,4 @@ prometheus:
               monitoring.kosa.io/component: prometheus
           resources:
             requests:
-              storage: 30Gi
+              storage: 100Gi

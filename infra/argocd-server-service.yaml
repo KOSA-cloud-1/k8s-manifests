@@ -7,7 +7,6 @@ metadata:
     metallb.io/loadBalancerIPs: 172.17.128.241
 spec:
   type: LoadBalancer
-  loadBalancerIP: 172.17.128.241
   selector:
     app.kubernetes.io/name: argocd-server
   ports:

@@ -18,7 +18,7 @@ Helm chart는 `prometheus-community/kube-prometheus-stack`을 사용합니다.
 
 이 방식은 Ceph/Rook/CSI 없이 단순하고 빠르지만, monitoring node가 장애 나면 Prometheus/Grafana도 함께 내려갑니다.
 PV `reclaimPolicy`는 `Retain`이라 Helm release를 삭제해도 로컬 데이터는 자동 삭제되지 않습니다.
-전용 monitoring node 디스크는 100Gi 이상을 권장하며, 현재 PV 크기는 Prometheus 30Gi, Grafana 5Gi, Alertmanager 2Gi입니다.
+전용 monitoring node 디스크는 200Gi 이상을 권장하며, 현재 PV 크기는 Prometheus 100Gi, Loki 60Gi, Grafana 10Gi, Alertmanager 5Gi입니다.
 
 ## 설치
 
@@ -76,12 +76,12 @@ kubectl taint node <node-name> dedicated=monitoring:NoSchedule
 그 node에 접속해서 local PV 경로를 만듭니다.
 
 ```bash
-sudo mkdir -p /mnt/monitoring/prometheus /mnt/monitoring/alertmanager /mnt/monitoring/grafana
-sudo chmod 0777 /mnt/monitoring/prometheus /mnt/monitoring/alertmanager /mnt/monitoring/grafana
+sudo mkdir -p /mnt/monitoring/prometheus /mnt/monitoring/alertmanager /mnt/monitoring/grafana /mnt/monitoring/loki
+sudo chmod 0777 /mnt/monitoring/prometheus /mnt/monitoring/alertmanager /mnt/monitoring/grafana /mnt/monitoring/loki
 ```
 
 디렉터리를 같은 디스크에 만들면 Kubernetes의 local PV `capacity`는 스케줄링 기준일 뿐 실제 디렉터리별 quota는 아닙니다.
-Prometheus는 `retentionSize: 24GB`로 TSDB 사용량을 제한합니다.
+Prometheus는 `retentionSize: 90GB`로 TSDB 사용량을 제한합니다.
 
 그 다음 local StorageClass, PV, Grafana PVC를 만들고 Helm overlay를 적용합니다.
 

@@ -23,7 +23,6 @@ grafana:
 
   service:
     type: LoadBalancer
-    loadBalancerIP: 172.17.128.242
     port: 80
     targetPort: 3000
     annotations:
@@ -53,7 +52,7 @@ prometheus:
     type: ClusterIP
   prometheusSpec:
     retention: 15d
-    retentionSize: 24GB
+    retentionSize: 90GB
     walCompression: true
 
     resources:
