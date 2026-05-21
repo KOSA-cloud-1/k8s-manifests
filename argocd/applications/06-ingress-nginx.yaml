@@ -17,7 +17,6 @@ spec:
         controller:
           service:
             type: LoadBalancer
-            loadBalancerIP: 172.17.128.240
             annotations:
               metallb.io/loadBalancerIPs: 172.17.128.240
             externalTrafficPolicy: Local

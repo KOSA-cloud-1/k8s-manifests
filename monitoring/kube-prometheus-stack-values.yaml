@@ -23,7 +23,6 @@ grafana:
 
   service:
     type: LoadBalancer
-    loadBalancerIP: 172.17.128.242
     port: 80
     targetPort: 3000
     annotations:
