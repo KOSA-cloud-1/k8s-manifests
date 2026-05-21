@@ -1,0 +1,55 @@
+# AI Profile Service alert rules
+#
+# 주의: 아래 rule은 photo-service가 다음 커스텀 metric을 노출한다는 전제이다.
+#   - profile_image_failed_total
+#   - profile_image_processing_seconds_bucket
+# 현재 앱(app/photo-service/app.py)에는 /metrics 와 위 metric이 구현되어 있지 않아
+# 이 rule들은 앱 metrics 구현 전까지 발동하지 않는다. (README 11항 참고)
+#
+# label "release: kube-prometheus-stack" 는 관례상 부여한다. 현재 클러스터의 Prometheus는
+# ruleSelector: {} / ruleSelectorNilUsesHelmValues: false 로 설정되어 있어 label과 무관하게
+# 모든 PrometheusRule을 선택한다. (monitoring/kube-prometheus-stack-values.yaml 참고)
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: ai-profile-service-rules
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/part-of: monitoring-observability
+spec:
+  groups:
+    - name: ai-profile-service.rules
+      rules:
+        - alert: PhotoServiceHighErrorRate
+          expr: |
+            sum(rate(profile_image_failed_total[5m])) > 0
+          for: 2m
+          labels:
+            severity: warning
+            service: photo-service
+          annotations:
+            summary: "Photo service image conversion errors detected"
+            description: "profile_image_failed_total increased during the last 5 minutes."
+
+        - alert: PhotoServiceHighLatencyP95
+          expr: |
+            histogram_quantile(0.95, sum(rate(profile_image_processing_seconds_bucket[5m])) by (le)) > 5
+          for: 5m
+          labels:
+            severity: warning
+            service: photo-service
+          annotations:
+            summary: "Photo service P95 latency is high"
+            description: "P95 image processing latency is higher than 5 seconds for 5 minutes."
+
+        - alert: PhotoServiceNoMetrics
+          expr: |
+            absent(up{job=~".*photo-service.*"} == 1)
+          for: 5m
+          labels:
+            severity: warning
+            service: photo-service
+          annotations:
+            summary: "Photo service metrics are missing"
+            description: "Prometheus cannot scrape photo-service metrics (no /metrics endpoint or ServiceMonitor target down)."

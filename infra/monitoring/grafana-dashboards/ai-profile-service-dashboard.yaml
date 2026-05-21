@@ -1,0 +1,329 @@
+# AI Profile Service Monitoring dashboard
+# Grafana sidecar(label grafana_dashboard: "1")가 자동 로드한다.
+# kube-prometheus-stack values: sidecar.dashboards.searchNamespace=ALL.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-ai-profile-service
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+    app.kubernetes.io/part-of: monitoring-observability
+data:
+  ai-profile-service.json: |
+    {
+      "annotations": {
+        "list": []
+      },
+      "editable": true,
+      "graphTooltip": 0,
+      "schemaVersion": 39,
+      "tags": [
+        "ai-profile-service",
+        "kosa"
+      ],
+      "templating": {
+        "list": [
+          {
+            "current": {},
+            "hide": 0,
+            "includeAll": false,
+            "label": "Prometheus",
+            "multi": false,
+            "name": "datasource",
+            "options": [],
+            "query": "prometheus",
+            "refresh": 1,
+            "regex": "",
+            "type": "datasource"
+          }
+        ]
+      },
+      "time": {
+        "from": "now-6h",
+        "to": "now"
+      },
+      "timezone": "",
+      "title": "AI Profile Service Monitoring",
+      "uid": "ai-profile-service",
+      "refresh": "30s",
+      "panels": [
+        {
+          "id": 1,
+          "type": "stat",
+          "title": "Request Rate (req/s)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 0,
+            "y": 0
+          },
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": []
+          },
+          "options": {},
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "sum(rate(profile_image_requests_total[5m]))"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "type": "stat",
+          "title": "Success Rate (req/s)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 8,
+            "y": 0
+          },
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": []
+          },
+          "options": {},
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "sum(rate(profile_image_success_total[5m]))"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "type": "stat",
+          "title": "Failure Rate (req/s)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 0
+          },
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": []
+          },
+          "options": {},
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "sum(rate(profile_image_failed_total[5m]))"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "type": "timeseries",
+          "title": "Processing Latency P95 (s)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 0,
+            "y": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "options": {},
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "histogram_quantile(0.95, sum(rate(profile_image_processing_seconds_bucket[5m])) by (le))"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "type": "stat",
+          "title": "Active Jobs",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 8,
+            "y": 8
+          },
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": []
+          },
+          "options": {},
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "sum(profile_image_active_jobs)"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "type": "stat",
+          "title": "Queue Depth",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 8
+          },
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": []
+          },
+          "options": {},
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "sum(profile_image_queue_depth)"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "type": "timeseries",
+          "title": "Pod CPU Usage",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 0,
+            "y": 16
+          },
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": []
+          },
+          "options": {},
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"apps\", pod=~\"photo-service.*\", container!=\"POD\", container!=\"\"}[5m])) by (pod)",
+              "legendFormat": "{{pod}}"
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "type": "timeseries",
+          "title": "Pod Memory Usage",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 8,
+            "y": 16
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes"
+            },
+            "overrides": []
+          },
+          "options": {},
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "sum(container_memory_working_set_bytes{namespace=\"apps\", pod=~\"photo-service.*\", container!=\"POD\", container!=\"\"}) by (pod)",
+              "legendFormat": "{{pod}}"
+            }
+          ]
+        },
+        {
+          "id": 9,
+          "type": "timeseries",
+          "title": "Pod Restart Count",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 16
+          },
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": []
+          },
+          "options": {},
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "sum(kube_pod_container_status_restarts_total{namespace=\"apps\", pod=~\"photo-service.*\"}) by (pod)",
+              "legendFormat": "{{pod}}"
+            }
+          ]
+        }
+      ]
+    }

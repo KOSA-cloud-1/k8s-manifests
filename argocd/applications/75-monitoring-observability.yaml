@@ -1,0 +1,27 @@
+# Manifest 기반 관측성 리소스(ServiceMonitor / PrometheusRule / Grafana dashboard).
+# app-of-apps(kosa-platform)가 argocd/applications 를 recurse 하므로 이 파일을 두면 자동 등록된다.
+# sync-wave 60: kube-prometheus-stack(wave 50)이 Operator CRD(ServiceMonitor/PrometheusRule)와
+# Grafana를 먼저 설치한 뒤에 동기화되도록 한다.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring-observability
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "60"
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/KOSA-cloud-1/k8s-manifests'
+    targetRevision: feature/monitoring-manifest
+    path: infra/monitoring
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false   # monitoring namespace는 namespaces/00-namespaces.yaml에서 이미 생성됨
+      - ApplyOutOfSyncOnly=true
