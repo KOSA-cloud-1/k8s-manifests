@@ -83,6 +83,9 @@ rm -f "$values_file"
 info "Applying Ceph RBD StorageClass"
 kubectl apply -f "$ROOT_DIR/storage/ceph-csi-rbd/00-storageclass.yaml"
 
+info "Patching argocd-server service to LoadBalancer"
+kubectl apply -f "$ROOT_DIR/infra/argocd-server-service.yaml"
+
 if kubectl get crd applications.argoproj.io >/dev/null 2>&1; then
   info "Applying ArgoCD root Application"
   kubectl apply -f "$ROOT_DIR/argocd/argo-app.yaml"
