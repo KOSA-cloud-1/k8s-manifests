@@ -32,7 +32,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: photo-service
-        image: kosa1team/photo-service:f884ec84ee22cab0bbaa51e65871d2eb1f662cba
+        image: kosa1team/photo-service:metrics-v1
         imagePullPolicy: Always
         ports:
         - containerPort: 5003
@@ -89,9 +89,12 @@ kind: Service
 metadata:
   name: photo-service
   namespace: apps
+  labels:
+    app: photo-service          # ServiceMonitor.selector.matchLabels 대상
 spec:
   selector:
     app: photo-service
   ports:
-  - port: 5003
+  - name: http                  # ServiceMonitor.endpoints[].port 가 참조
+    port: 5003
     targetPort: 5003
