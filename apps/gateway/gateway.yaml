@@ -34,7 +34,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: gateway
-        image: kosa1team/gateway:5439349e960a81f81e8fb6ba50d3dcf85b7c40c3
+        image: kosa1team/gateway:705484088aed979e19f24918cd441defd45c3884
         ports:
         - containerPort: 5000
         securityContext:
@@ -70,9 +70,12 @@ kind: Service
 metadata:
   name: gateway
   namespace: apps
+  labels:
+    app: gateway          # ServiceMonitor.selector.matchLabels 대상
 spec:
   selector:
     app: gateway  #수정 필요 frontend
   ports:
-  - port: 5000
+  - name: http            # ServiceMonitor.endpoints[].port 가 참조
+    port: 5000
     targetPort: 5000

@@ -29,7 +29,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: auth-server
-        image: kosa1team/auth-server:5439349e960a81f81e8fb6ba50d3dcf85b7c40c3
+        image: kosa1team/auth-server:705484088aed979e19f24918cd441defd45c3884
         ports:
         - containerPort: 5001
         securityContext:
