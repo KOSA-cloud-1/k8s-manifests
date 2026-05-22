@@ -34,7 +34,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: gateway
-        image: kosa1team/gateway:e9ebe659019062d7714079a23db7a998becda90c
+        image: kosa1team/gateway:1e0d4db05a49e38fa1fbc5148d63bb852c4a137c
         ports:
         - containerPort: 5000
         securityContext:
