@@ -81,7 +81,7 @@ sudo chmod 0777 /mnt/monitoring/prometheus /mnt/monitoring/alertmanager /mnt/mon
 ```
 
 디렉터리를 같은 디스크에 만들면 Kubernetes의 local PV `capacity`는 스케줄링 기준일 뿐 실제 디렉터리별 quota는 아닙니다.
-Prometheus는 `retentionSize: 90GB`로 TSDB 사용량을 제한합니다.
+Prometheus는 30일 보존 + `retentionSize: 80GB`로 TSDB 사용량을 제한하고, Loki도 30일 보존(compactor retention)을 적용합니다.
 
 그 다음 local StorageClass, PV, Grafana PVC를 만들고 Helm overlay를 적용합니다.
 
