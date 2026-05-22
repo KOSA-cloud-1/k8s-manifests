@@ -35,6 +35,16 @@ loki:
   storage:
     type: filesystem
 
+  # 로그 보존 30일(720h). 미설정 시 무한 적재라 언젠가 PV가 가득 찬다.
+  # compactor가 retention_period 경과분을 삭제하며, retention_enabled를 켜면
+  # delete_request_store 지정이 필수다(없으면 기동 실패).
+  limits_config:
+    retention_period: 720h
+
+  compactor:
+    retention_enabled: true
+    delete_request_store: filesystem
+
 deploymentMode: SingleBinary
 
 singleBinary:

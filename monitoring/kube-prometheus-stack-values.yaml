@@ -62,8 +62,10 @@ prometheus:
   service:
     type: ClusterIP
   prometheusSpec:
-    retention: 15d
-    retentionSize: 90GB
+    # 보존 30일. retention(시간)·retentionSize(용량) 중 먼저 도달하는 쪽이 삭제 트리거.
+    # 현재 적재율(~0.9GB/일)이면 30일 ≈ 27GB로, 80GB(100Gi PV의 ~80% 안전 backstop) 안에 충분히 들어옴.
+    retention: 30d
+    retentionSize: 80GB
     walCompression: true
 
     resources:
