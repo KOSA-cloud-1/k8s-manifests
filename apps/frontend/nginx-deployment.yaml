@@ -29,7 +29,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: nginx
-        image: kosa1team/frontend:71445d16924fae34367dcc0214319e9b81028bfa
+        image: kosa1team/frontend:a8c0c42e709b9d031746bb78dd183f3a3fb3c081
         ports:
         - containerPort: 80
         securityContext:
