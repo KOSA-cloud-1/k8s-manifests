@@ -97,7 +97,7 @@ Prometheus는 `servicemonitor/photo-service-servicemonitor.yaml`을 통해 `apps
   `profile_image_failed_total`, `profile_image_processing_seconds`(histogram),
   `profile_image_queue_depth`, `profile_image_active_jobs`
 - `profile_image_queue_depth`는 앱 내부 큐가 없으므로 0으로 노출한다.
-- `fake-exporter/` 파일은 이전 시연용으로 남아 있지만 `kustomization.yaml`에서 참조하지 않는다.
+
 
 ### gateway metric (http_request_duration_seconds)
 

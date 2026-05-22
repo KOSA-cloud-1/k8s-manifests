@@ -6,8 +6,7 @@ kind: Kustomization
 # Grafana dashboard ConfigMap은 plain ConfigMap이며, name hash를 붙이지 않아야
 # sidecar 라벨 기반 자동 로드가 안정적으로 동작한다. (configMapGenerator 사용 안 함)
 resources:
-  # photo-service(FastAPI)가 /metrics 로 profile_image_* metric을 직접 노출하므로
-  # 실제 ServiceMonitor를 사용한다. (시연용 fake-exporter는 제거 — 이미지 빌드/배포 후 실데이터)
+  # photo-service(FastAPI)가 /metrics 로 profile_image_* metric을 노출
   - servicemonitor/ingress-nginx-servicemonitor.yaml
   - servicemonitor/photo-service-servicemonitor.yaml
   - servicemonitor/gateway-servicemonitor.yaml
