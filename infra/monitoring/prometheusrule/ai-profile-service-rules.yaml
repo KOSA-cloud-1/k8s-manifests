@@ -1,8 +1,7 @@
 # AI Profile Service alert rules
 #
-# 이 rule이 참조하는 profile_image_* metric은 실제 photo-service 앱이 아니라
-# 시연용 synthetic exporter(infra/monitoring/fake-exporter/)가 노출한다.
-# (앱에 /metrics 가 없고 앱 코드를 수정할 수 없기 때문. README 참고)
+# 이 rule이 참조하는 profile_image_* metric은 apps/photo-service가 /metrics로 직접 노출한다.
+# Prometheus는 infra/monitoring/servicemonitor/photo-service-servicemonitor.yaml로 scrape한다.
 #
 # label "release: kube-prometheus-stack" 는 관례상 부여한다. 현재 클러스터의 Prometheus는
 # ruleSelector: {} / ruleSelectorNilUsesHelmValues: false 로 설정되어 있어 label과 무관하게
@@ -21,8 +20,6 @@ spec:
       rules:
         - alert: PhotoServiceHighErrorRate
           # 실패 비율(failed/requests)이 20%를 넘으면 발동.
-          # synthetic exporter 기본 FAILURE_RATIO=0.04(4%)에서는 발동하지 않으며,
-          # exporter env FAILURE_RATIO 를 올리면 발동을 시연할 수 있다.
           expr: |
             sum(rate(profile_image_failed_total[5m]))
             /
@@ -48,7 +45,7 @@ spec:
             description: "P95 image processing latency is higher than 5 seconds for 5 minutes."
 
         - alert: PhotoServiceNoMetrics
-          # profile_image_* metric 자체가 사라지면 발동(synthetic exporter Down 등).
+          # profile_image_* metric 자체가 사라지면 발동(photo-service /metrics scrape 실패 등).
           # job 라벨 이름에 의존하지 않도록 metric 부재(absent)로 판정한다.
           expr: |
             absent(profile_image_requests_total)
@@ -58,4 +55,4 @@ spec:
             service: photo-service
           annotations:
             summary: "Photo service metrics are missing"
-            description: "profile_image_* metrics are absent (fake-ai-profile-metrics-exporter down or not scraped)."
+            description: "profile_image_* metrics are absent (photo-service /metrics is down or not scraped)."
