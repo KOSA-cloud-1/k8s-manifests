@@ -12,8 +12,10 @@ resources:
   - servicemonitor/photo-service-servicemonitor.yaml
   - prometheusrule/ai-profile-service-rules.yaml
   - prometheusrule/kubernetes-workload-rules.yaml
+  - prometheusrule/memory-rules.yaml
   - grafana-dashboards/ai-profile-service-dashboard.yaml
   - grafana-dashboards/kubernetes-cluster-overview-dashboard.yaml
   - grafana-dashboards/kubernetes-workload-dashboard.yaml
   - grafana-dashboards/ingress-nginx-dashboard.yaml
   - grafana-dashboards/loki-log-dashboard.yaml
+  - grafana-dashboards/memory-dashboard.yaml
