@@ -29,7 +29,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: employee-server
-        image: kosa1team/employee-server:5439349e960a81f81e8fb6ba50d3dcf85b7c40c3
+        image: kosa1team/employee-server:705484088aed979e19f24918cd441defd45c3884
         ports:
         - containerPort: 5002
         securityContext:
