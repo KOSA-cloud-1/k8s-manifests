@@ -32,7 +32,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: photo-service
-        image: kosa1team/photo-service:metrics-v1
+        image: kosa1team/photo-service:5439349e960a81f81e8fb6ba50d3dcf85b7c40c3
         imagePullPolicy: Always
         ports:
         - containerPort: 5003
@@ -45,10 +45,10 @@ spec:
         resources:
           requests:
             cpu: 2000m
-            memory: 5Gi
+            memory: 10Gi
           limits:
             cpu: 4000m
-            memory: 7.5Gi
+            memory: 16Gi
         startupProbe:
           httpGet:
             path: /health
