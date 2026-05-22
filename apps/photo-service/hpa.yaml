@@ -1,0 +1,23 @@
+# photo-service 오토스케일링 (AI 프로필 이미지 변환 — CPU 집약).
+# CPU 사용률(파드 requests=2 CPU 대비)이 평균 70%를 넘으면 확장.
+# 주의: photo-service는 메모리 requests=5Gi라 가용 RAM이 큰 노드(worker1/worker2)에만
+#       스케줄된다. max 6까지 확장하려면 두 노드의 여유 용량이 필요하다.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: photo-service
+  namespace: apps
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: photo-service
+  minReplicas: 3
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

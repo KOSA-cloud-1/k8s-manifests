@@ -9,16 +9,31 @@ spec:
   project: default
   source:
     repoURL: 'https://github.com/KOSA-cloud-1/k8s-manifests'
-    targetRevision: dev
+    targetRevision: feature/monitoring-manifest
     path: apps
     directory:
       recurse: true
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: apps
+  # HPA가 photo-service / gateway의 replicas를 관리하므로, ArgoCD가 manifest의
+  # replicas로 되돌려 HPA와 충돌하지 않도록 해당 필드 차이를 무시한다.
+  # (RespectIgnoreDifferences=true 로 sync 시에도 적용을 건너뛴다.)
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      name: photo-service
+      jqPathExpressions:
+        - .spec.replicas
+    - group: apps
+      kind: Deployment
+      name: gateway
+      jqPathExpressions:
+        - .spec.replicas
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - ApplyOutOfSyncOnly=true
+      - RespectIgnoreDifferences=true
