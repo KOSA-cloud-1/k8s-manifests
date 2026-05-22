@@ -3,6 +3,33 @@
 이 저장소는 애플리케이션, Galera, 백업, 스토리지, 모니터링의 Kubernetes 선언 상태를 관리합니다.
 운영 배포의 기준은 ArgoCD이며, `deploy.sh`는 최초 bootstrap 보조 용도로만 사용합니다.
 
+## 저장소 구조
+
+| 디렉터리 | 내용 |
+|---|---|
+| `argocd/` | app-of-apps root(`argo-app.yaml`) + child Application(`applications/`) |
+| `namespaces/` | 네임스페이스 정의 |
+| `apps/` | 앱 워크로드(gateway, auth-server, employee-server, photo-service, frontend) + NetworkPolicy/PDB/HPA |
+| `galera/` | MariaDB Galera StatefulSet (`data` ns) |
+| `storage/ceph-csi-rbd/` | Ceph CSI RBD StorageClass/리소스 |
+| `external-secrets/` | External Secrets Operator + ExternalSecret(AWS Secrets Manager) |
+| `monitoring/` | kube-prometheus-stack/Loki/Promtail **Helm values** + local-storage PV + datasource |
+| `infra/monitoring/` | 선언형 관측성: ServiceMonitor / PrometheusRule / Grafana dashboard ConfigMap |
+| `infra/` | metallb-config, argocd-server-service 등 인프라 매니페스트 |
+| `backup/` | 사진 백업 CronJob |
+| `deploy.sh` | 최초 bootstrap 스크립트(운영 배포용 아님) |
+
+## 문서 색인
+
+| 문서 | 내용 |
+|---|---|
+| 이 문서(최상위) | 전체 구조 / 배포 순서 / Secret / Storage / Galera / Ingress |
+| `infra/monitoring/README.md` | 모니터링·알림·대시보드·HPA 상세 |
+| `external-secrets/README.md` | ExternalSecret / AWS Secrets Manager 매핑 |
+| `storage/ceph-csi-rbd/README.md` | Ceph CSI RBD |
+| `backup/README.md` | 백업 CronJob |
+| `monitoring/README.md` | Helm values 관련 |
+
 ## Namespace
 
 - `apps`: gateway, auth-server, employee-server, photo-service, frontend, Ingress
@@ -80,21 +107,27 @@ mysql.data.svc.cluster.local
 
 ## Monitoring
 
-요청대로 모니터링은 Ceph가 아니라 전용 monitoring node의 local PV에 저장합니다.
-현재 권장 기본값은 다음과 같습니다.
+모니터링은 Ceph가 아니라 전용 monitoring node(label `dedicated=monitoring`)의 local PV에 저장합니다.
+관측성 리소스(ServiceMonitor/PrometheusRule/dashboard)와 HPA 상세는 `infra/monitoring/README.md` 참고.
 
-- Prometheus: 15일 보존, `retentionSize: 90GB`, PV 100Gi
-- Loki: PV 60Gi
-- Grafana: PV 10Gi
-- Alertmanager: PV 5Gi
-- dedicated monitoring node: 200Gi 이상 권장
+저장/보존 (현재값):
 
-아직 미정인 정책에 대한 제안:
+- Prometheus: 30일 보존, `retentionSize: 80GB`, PV 100Gi
+- Loki: 30일 보존(compactor retention), PV 60Gi
+- Grafana: PV 10Gi, Alertmanager: PV 5Gi
+- dedicated monitoring node 디스크: 200Gi 이상 권장(local PV capacity는 advisory)
 
-- 단기 운영: 현재 local PV 유지, Prometheus 15일 보존, Grafana dashboard/config는 Git으로 관리
-- 장애 허용: monitoring node 장애 시 메트릭 유실을 허용하되, 앱 운영에는 영향 없게 분리
-- 장기 보관 필요 시점: 30일 이상 보존, 감사/용량 추세 분석, 장애 회고 지표가 필요해지면 Thanos 또는 remote_write 도입
-- 백업: Grafana PVC와 Alertmanager 설정은 정기 백업, Prometheus TSDB는 장기 보관 도입 전까지 best-effort
+스택 구성:
+
+- `kube-prometheus-stack`(Prometheus/Grafana/Alertmanager/node-exporter/kube-state-metrics) +
+  `loki`/`promtail`(로그) + `metrics-server`(HPA용 resource metrics)
+- Grafana(LoadBalancer `172.17.128.242`)에 7개 대시보드 자동 로드:
+  AI Profile / Cluster Overview / Workload / Ingress NGINX / Loki / Memory / Gateway
+- 앱 메트릭: photo-service `profile_image_*`, gateway `http_request_duration_seconds`
+- HPA: photo-service(memory 60% + cpu 60% 보조, min2/max4), gateway(cpu 70%, min2/max4)
+
+장기 보관(30일+ 감사/추세/장애 회고)이 필요해지면 Thanos 또는 remote_write 도입을 검토합니다.
+Grafana PVC/Alertmanager 설정은 정기 백업, Prometheus TSDB는 장기 보관 도입 전까지 best-effort.
 
 ## Ingress And Load Balancer
 
@@ -148,21 +181,29 @@ bash deploy.sh
 `argocd/argo-app.yaml`은 app-of-apps root Application입니다. 하위 Application은
 `argocd/applications/`에서 관리합니다.
 
-동기화 순서:
+child Application 인벤토리 (sync-wave 오름차순 = 배포 순서):
 
-1. namespaces
-2. MetalLB chart
-3. MetalLB IP pool/L2Advertisement config
-4. External Secrets Operator
-5. ingress-nginx
-6. ExternalSecret/ClusterSecretStore
-7. Ceph CSI RBD
-8. StorageClass
-9. Galera
-10. apps
-11. infra
-12. backup
-13. monitoring local storage
+| wave | Application | source | namespace |
+|---|---|---|---|
+| -30 | kosa-namespaces | `namespaces/` | default |
+| -25 | metallb | chart metallb 0.15.3 | metallb-system |
+| -24 | metallb-config | `infra/` | metallb-system |
+| -20 | external-secrets-operator | chart external-secrets 2.5.0 | external-secrets |
+| -15 | ingress-nginx | chart ingress-nginx 4.15.1 | ingress-nginx |
+| -10 | metrics-server | chart metrics-server 3.12.2 | kube-system |
+| -10 | kosa-external-secrets | `external-secrets/` | external-secrets |
+| -8 | ceph-csi-rbd | chart ceph-csi-rbd 3.16.2 | ceph-csi-rbd |
+| -5 | kosa-storage | `storage/ceph-csi-rbd/` | ceph-csi-rbd |
+| 0 | kosa-data | `galera/` | data |
+| 10 | kosa-apps | `apps/` | apps |
+| 20 | kosa-infra | `infra/` | apps |
+| 30 | kosa-backup | `backup/` | backup |
+| 40 | kosa-monitoring-local-storage | `monitoring/local-storage.yaml` | monitoring |
+| 45 | kosa-monitoring-config | `monitoring/loki-grafana-datasource.yaml` | monitoring |
+| 50 | kube-prometheus-stack | chart 85.2.0 + `monitoring/*-values.yaml` | monitoring |
+| 55 | loki | chart 6.29.0 + `monitoring/loki-*values.yaml` | monitoring |
+| 60 | promtail | chart 6.16.6 + `monitoring/promtail-values.yaml` | monitoring |
+| 60 | monitoring-observability | `infra/monitoring/` | monitoring |
 
 ## Bootstrap Script
 

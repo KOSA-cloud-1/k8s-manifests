@@ -1,0 +1,33 @@
+# ingress-nginx controller ServiceMonitor
+#
+# 주의: 현재 argocd/applications/06-ingress-nginx.yaml 의 Helm values에는
+#       controller.metrics 설정이 없어 metrics가 비활성화 상태이다.
+#       이 ServiceMonitor가 동작하려면 ingress-nginx Helm values에 아래를 추가해야 한다.
+#
+#         controller:
+#           metrics:
+#             enabled: true
+#
+#       metrics를 켜면 controller Service에 name "metrics"(10254) port가 생성되고
+#       nginx_ingress_controller_* metric이 노출된다. (README 참고)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ingress-nginx-controller
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/part-of: monitoring-observability
+spec:
+  namespaceSelector:
+    matchNames:
+      - ingress-nginx
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ingress-nginx
+      app.kubernetes.io/component: controller
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 10s

@@ -70,9 +70,12 @@ kind: Service
 metadata:
   name: gateway
   namespace: apps
+  labels:
+    app: gateway          # ServiceMonitor.selector.matchLabels 대상
 spec:
   selector:
     app: gateway  #수정 필요 frontend
   ports:
-  - port: 5000
+  - name: http            # ServiceMonitor.endpoints[].port 가 참조
+    port: 5000
     targetPort: 5000

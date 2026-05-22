@@ -15,6 +15,14 @@ spec:
       releaseName: ingress-nginx
       values: |
         controller:
+          metrics:
+            # controller Service에 name "metrics"(10254) port를 추가하고
+            # nginx_ingress_controller_* metric을 노출한다.
+            enabled: true
+            # ServiceMonitor는 infra/monitoring/servicemonitor/ingress-nginx-servicemonitor.yaml
+            # 에서 직접 관리하므로 chart 내장 serviceMonitor는 켜지 않는다(중복 방지).
+            serviceMonitor:
+              enabled: false
           service:
             type: LoadBalancer
             annotations:

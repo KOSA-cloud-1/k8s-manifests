@@ -21,6 +21,14 @@ grafana:
     passwordKey: admin-password
   defaultDashboardsEnabled: true
 
+  # Grafana DB는 worker7의 RWO local PV에 저장된다. 기본 RollingUpdate에서는 롤아웃 중
+  # grafana 파드 2개가 잠시 공존하며 같은 SQLite 파일을 동시에 열어 DB 락 경합이 발생한다
+  # (crashloop, exitCode 2). 특히 DB가 비어 있을 때 첫 부팅 마이그레이션이 local-disk fsync
+  # 때문에 느려 더 잘 터진다. Recreate는 항상 grafana 파드를 1개만 띄워 마이그레이션이
+  # 깨끗하게 끝나도록 보장한다.
+  deploymentStrategy:
+    type: Recreate
+
   initChownData:
     enabled: false
 
@@ -54,8 +62,10 @@ prometheus:
   service:
     type: ClusterIP
   prometheusSpec:
-    retention: 15d
-    retentionSize: 90GB
+    # 보존 30일. retention(시간)·retentionSize(용량) 중 먼저 도달하는 쪽이 삭제 트리거.
+    # 현재 적재율(~0.9GB/일)이면 30일 ≈ 27GB로, 80GB(100Gi PV의 ~80% 안전 backstop) 안에 충분히 들어옴.
+    retention: 30d
+    retentionSize: 80GB
     walCompression: true
 
     resources:

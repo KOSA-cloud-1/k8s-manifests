@@ -45,10 +45,10 @@ spec:
         resources:
           requests:
             cpu: 2000m
-            memory: 5Gi
+            memory: 4Gi
           limits:
             cpu: 4000m
-            memory: 7.5Gi
+            memory: 6Gi
         startupProbe:
           httpGet:
             path: /health
@@ -89,9 +89,12 @@ kind: Service
 metadata:
   name: photo-service
   namespace: apps
+  labels:
+    app: photo-service          # ServiceMonitor.selector.matchLabels 대상
 spec:
   selector:
     app: photo-service
   ports:
-  - port: 5003
+  - name: http                  # ServiceMonitor.endpoints[].port 가 참조
+    port: 5003
     targetPort: 5003

@@ -1,0 +1,26 @@
+# gateway ServiceMonitor
+#
+# gateway(FastAPI 프록시)가 prometheus-fastapi-instrumentator로 /metrics 에
+# http_request_duration_seconds{handler,method,status} 등을 노출하므로 scrape 한다.
+#  - selector.matchLabels : apps/gateway Service 의 metadata.labels 와 일치
+#  - endpoints.port        : 해당 Service 의 ports[].name ("http") 와 일치
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: gateway
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/part-of: monitoring-observability
+spec:
+  namespaceSelector:
+    matchNames:
+      - apps
+  selector:
+    matchLabels:
+      app: gateway
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 10s

@@ -1,0 +1,24 @@
+# fake-ai-profile-metrics-exporter ServiceMonitor
+#
+# 시연용 synthetic exporter Service(monitoring namespace)를 scrape한다.
+# Service ports[].name = http 와 endpoints[].port = http 가 일치한다.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: fake-ai-profile-metrics-exporter
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/part-of: monitoring-observability
+spec:
+  namespaceSelector:
+    matchNames:
+      - monitoring
+  selector:
+    matchLabels:
+      app: fake-ai-profile-metrics-exporter
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 10s
