@@ -17,7 +17,7 @@ spec:
           - $values/monitoring/kube-prometheus-stack-values.yaml
           - $values/monitoring/kube-prometheus-stack-persistence-values.yaml
     - repoURL: 'https://github.com/KOSA-cloud-1/k8s-manifests'
-      targetRevision: dev
+      targetRevision: feature/monitoring-manifest
       ref: values
   destination:
     server: 'https://kubernetes.default.svc'
