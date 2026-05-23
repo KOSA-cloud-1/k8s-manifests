@@ -19,59 +19,79 @@ jobs:
       # 기본 k8s 스키마 + CRD 카탈로그(ServiceMonitor/PrometheusRule/ExternalSecret/metallb 등)
       SCHEMA_DEFAULT: default
       SCHEMA_CRD: "https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json"
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Install kustomize & kubeconform
         run: |
           set -euo pipefail
+
           curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | tar -xz
           sudo install -m 0755 kustomize /usr/local/bin/kustomize
+
           curl -sL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | tar -xz kubeconform
           sudo install -m 0755 kubeconform /usr/local/bin/kubeconform
+
           kustomize version
+          kubeconform -v
 
       # ① kustomize 디렉터리(infra/monitoring 등): 렌더링 자체가 깨지면 실패 = ArgoCD SyncError 예방
       - name: kustomize build + validate
         run: |
           set -euo pipefail
+
           while IFS= read -r dir; do
             echo "::group::kustomize build $dir"
-            kustomize build "$dir" | kubeconform -strict -ignore-missing-schemas -summary \
-              -schema-location "$SCHEMA_DEFAULT" -schema-location "$SCHEMA_CRD"
+
+            kustomize build "$dir" | kubeconform \
+              -strict \
+              -ignore-missing-schemas \
+              -summary \
+              -schema-location "$SCHEMA_DEFAULT" \
+              -schema-location "$SCHEMA_CRD"
+
             echo "::endgroup::"
           done < <(find . -name kustomization.yaml -not -path './.git/*' -printf '%h\n' | sort -u)
 
-      # ② 일반 매니페스트: 쿠버네티스 스키마 검증(필드 오타/타입/누락/잘못된 kind 등)
-      #    제외: helm values, kustomization.yaml, *.example, kustomize 디렉터리(infra/monitoring),
-      #          argocd Application(ArgoCD가 sync 시 자체 검증 + 인라인 helm values 포함)
-- name: kubeconform (plain manifests)
-  run: |
-    set -euo pipefail
+      # ② 일반 매니페스트: 쿠버네티스 스키마 검증
+      #    제외:
+      #    - .github workflow
+      #    - helm values
+      #    - kustomization.yaml
+      #    - *.example
+      #    - kustomize build로 이미 검증하는 디렉터리
+      #    - argocd Application
+      - name: kubeconform (plain manifests)
+        run: |
+          set -euo pipefail
 
-    mapfile -t files < <(
-      git ls-files '*.yaml' '*.yml' \
-      | awk '
-        /^\.github\// { next }
-        /(^|\/)kustomization\.ya?ml$/ { next }
-        /(^|\/)values.*\.ya?ml$/ { next }
-        /\.example$/ { next }
-        /^infra\/monitoring\// { next }
-        /^argocd\// { next }
-        { print }
-      '
-    )
+          mapfile -t files < <(
+            git ls-files '*.yaml' '*.yml' \
+            | awk '
+              /^\.github\// { next }
+              /(^|\/)kustomization\.ya?ml$/ { next }
+              /(^|\/)values.*\.ya?ml$/ { next }
+              /\.example$/ { next }
+              /^infra\/monitoring\// { next }
+              /^argocd\// { next }
+              { print }
+            '
+          )
 
-    printf 'validating %d files\n' "${#files[@]}"
+          printf 'validating %d files\n' "${#files[@]}"
 
-    if [ "${#files[@]}" -eq 0 ]; then
-      echo "No plain Kubernetes manifests found"
-      exit 0
-    fi
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No plain Kubernetes manifests found"
+            exit 0
+          fi
 
-    printf '%s\n' "${files[@]}"
+          printf '%s\n' "${files[@]}"
 
-    kubeconform -strict -ignore-missing-schemas -summary \
-      -schema-location "$SCHEMA_DEFAULT" \
-      -schema-location "$SCHEMA_CRD" \
-      "${files[@]}"
+          kubeconform \
+            -strict \
+            -ignore-missing-schemas \
+            -summary \
+            -schema-location "$SCHEMA_DEFAULT" \
+            -schema-location "$SCHEMA_CRD" \
+            "${files[@]}"
