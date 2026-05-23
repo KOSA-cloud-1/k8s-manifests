@@ -1,0 +1,60 @@
+name: validate-manifests
+
+# PR이 dev/main 으로 올라올 때 매니페스트를 빌드/스키마 검증한다.
+# main=운영 자동 sync 이므로, 깨진 매니페스트가 운영에 도달하기 전에 막는 게이트.
+# (스키마 검증이라 구조 오류는 잡지만, /health 경로 같은 "값은 유효한데 의미가 틀린" 건 못 잡음)
+on:
+  pull_request:
+    branches: [dev, main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    env:
+      KUSTOMIZE_VERSION: v5.4.3
+      KUBECONFORM_VERSION: v0.6.7
+      # 기본 k8s 스키마 + CRD 카탈로그(ServiceMonitor/PrometheusRule/ExternalSecret/metallb 등)
+      SCHEMA_DEFAULT: default
+      SCHEMA_CRD: "https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install kustomize & kubeconform
+        run: |
+          set -euo pipefail
+          curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | tar -xz
+          sudo install -m 0755 kustomize /usr/local/bin/kustomize
+          curl -sL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | tar -xz kubeconform
+          sudo install -m 0755 kubeconform /usr/local/bin/kubeconform
+          kustomize version
+
+      # ① kustomize 디렉터리(infra/monitoring 등): 렌더링 자체가 깨지면 실패 = ArgoCD SyncError 예방
+      - name: kustomize build + validate
+        run: |
+          set -euo pipefail
+          while IFS= read -r dir; do
+            echo "::group::kustomize build $dir"
+            kustomize build "$dir" | kubeconform -strict -ignore-missing-schemas -summary \
+              -schema-location "$SCHEMA_DEFAULT" -schema-location "$SCHEMA_CRD"
+            echo "::endgroup::"
+          done < <(find . -name kustomization.yaml -not -path './.git/*' -printf '%h\n' | sort -u)
+
+      # ② 일반 매니페스트: 쿠버네티스 스키마 검증(필드 오타/타입/누락/잘못된 kind 등)
+      #    제외: helm values, kustomization.yaml, *.example, kustomize 디렉터리(infra/monitoring),
+      #          argocd Application(ArgoCD가 sync 시 자체 검증 + 인라인 helm values 포함)
+      - name: kubeconform (plain manifests)
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(git ls-files '*.yaml' '*.yml' \
+            | grep -vE '(^|/)kustomization\.ya?ml$' \
+            | grep -vE 'values' \
+            | grep -vE '\.example$' \
+            | grep -vE '^infra/monitoring/' \
+            | grep -vE '^argocd/')
+          printf 'validating %d files\n' "${#files[@]}"
+          kubeconform -strict -ignore-missing-schemas -summary \
+            -schema-location "$SCHEMA_DEFAULT" -schema-location "$SCHEMA_CRD" \
+            "${files[@]}"
