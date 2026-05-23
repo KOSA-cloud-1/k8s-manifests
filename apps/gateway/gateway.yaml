@@ -4,7 +4,7 @@ metadata:
   name: gateway
   namespace: apps
 spec:
-  replicas: 3
+  replicas: 2          # HPA minReplicas와 정렬 (실제 개수는 HPA가 관리)
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -74,7 +74,7 @@ metadata:
     app: gateway          # ServiceMonitor.selector.matchLabels 대상
 spec:
   selector:
-    app: gateway  #수정 필요 frontend
+    app: gateway
   ports:
   - name: http            # ServiceMonitor.endpoints[].port 가 참조
     port: 5000

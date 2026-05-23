@@ -4,7 +4,7 @@ metadata:
   name: gateway
   namespace: apps
 spec:
-  minAvailable: 2
+  maxUnavailable: 1   # HPA로 2~4개 오감: replica 수와 무관하게 "한 번에 1개만 내려감" 보장 (drain 가능)
   selector:
     matchLabels:
       app: gateway
