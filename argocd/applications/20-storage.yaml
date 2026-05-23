@@ -11,8 +11,6 @@ spec:
     repoURL: 'https://github.com/KOSA-cloud-1/k8s-manifests'
     targetRevision: dev
     path: storage/ceph-csi-rbd
-    directory:
-      exclude: '10-test-pvc.yaml'
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: ceph-csi-rbd

@@ -15,6 +15,24 @@ spec:
       releaseName: ingress-nginx
       values: |
         controller:
+          # 단일 replica는 SPOF였다: ingress pod가 죽으면 MetalLB가 VIP(172.17.128.240)
+          # announce를 멈추고, 앞단 HAProxy backend(check)가 DOWN → 502 Bad Gateway.
+          # 최소 2 replica + 노드 분산 + PDB 로 HA 구성한다.
+          replicaCount: 2
+          # 두 replica가 서로 다른 노드에 뜨도록 분산 (한 노드 장애로 둘 다 죽는 것 방지)
+          topologySpreadConstraints:
+            - maxSkew: 1
+              topologyKey: kubernetes.io/hostname
+              whenUnsatisfiable: ScheduleAnyway
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: ingress-nginx
+                  app.kubernetes.io/instance: ingress-nginx
+                  app.kubernetes.io/component: controller
+          # 노드 drain/업그레이드 시에도 최소 1개는 살아있도록
+          podDisruptionBudget:
+            enabled: true
+            minAvailable: 1
           metrics:
             # controller Service에 name "metrics"(10254) port를 추가하고
             # nginx_ingress_controller_* metric을 노출한다.
@@ -27,7 +45,10 @@ spec:
             type: LoadBalancer
             annotations:
               metallb.io/loadBalancerIPs: 172.17.128.240
-            externalTrafficPolicy: Local
+            # Cluster: VIP를 든 노드에 ready ingress pod가 없어도 kube-proxy가 다른 노드의
+            # pod로 포워딩 → pod 단위 장애에도 502 없이 더 견고. 앞단 HAProxy가 TCP 모드라
+            # 실제 client IP는 어차피 안 보이므로 Local(클라이언트 IP 보존)의 장점은 없다.
+            externalTrafficPolicy: Cluster
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: ingress-nginx
