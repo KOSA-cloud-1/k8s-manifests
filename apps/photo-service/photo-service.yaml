@@ -14,6 +14,16 @@ spec:
         app: photo-service
     spec:
       automountServiceAccountToken: false
+      # 2 replica를 worker1·worker2에 1개씩 분산 (한 노드 죽어도 1개는 생존).
+      # 단, RAM(4Gi/파드) 때문에 affinity는 worker1/worker2로 한정되어 있어, 한 노드가
+      # 통째로 죽으면 남은 노드 용량 한계로 1개만 뜰 수 있음(진짜 이중화는 호스트 안정화/3번째 노드 필요).
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app: photo-service
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
