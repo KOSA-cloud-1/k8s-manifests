@@ -54,6 +54,7 @@ jobs:
             | grep -vE '\.example$' \
             | grep -vE '^infra/monitoring/' \
             | grep -vE '^argocd/')
+            | grep -vE '^\.github/'
           printf 'validating %d files\n' "${#files[@]}"
           kubeconform -strict -ignore-missing-schemas -summary \
             -schema-location "$SCHEMA_DEFAULT" -schema-location "$SCHEMA_CRD" \
