@@ -71,7 +71,7 @@ jobs:
             | awk '
               /^\.github\// { next }
               /(^|\/)kustomization\.ya?ml$/ { next }
-              /(^|\/)values.*\.ya?ml$/ { next }
+              /(^|\/).*values.*\.ya?ml$/ { next }
               /\.example$/ { next }
               /^infra\/monitoring\// { next }
               /^argocd\// { next }
