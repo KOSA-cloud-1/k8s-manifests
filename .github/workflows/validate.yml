@@ -45,17 +45,33 @@ jobs:
       # ② 일반 매니페스트: 쿠버네티스 스키마 검증(필드 오타/타입/누락/잘못된 kind 등)
       #    제외: helm values, kustomization.yaml, *.example, kustomize 디렉터리(infra/monitoring),
       #          argocd Application(ArgoCD가 sync 시 자체 검증 + 인라인 helm values 포함)
-      - name: kubeconform (plain manifests)
-        run: |
-          set -euo pipefail
-          mapfile -t files < <(git ls-files '*.yaml' '*.yml' \
-            | grep -vE '(^|/)kustomization\.ya?ml$' \
-            | grep -vE 'values' \
-            | grep -vE '\.example$' \
-            | grep -vE '^infra/monitoring/' \
-            | grep -vE '^argocd/') \
-            | grep -vE '^\.github/'
-          printf 'validating %d files\n' "${#files[@]}"
-          kubeconform -strict -ignore-missing-schemas -summary \
-            -schema-location "$SCHEMA_DEFAULT" -schema-location "$SCHEMA_CRD" \
-            "${files[@]}"
+- name: kubeconform (plain manifests)
+  run: |
+    set -euo pipefail
+
+    mapfile -t files < <(
+      git ls-files '*.yaml' '*.yml' \
+      | awk '
+        /^\.github\// { next }
+        /(^|\/)kustomization\.ya?ml$/ { next }
+        /(^|\/)values.*\.ya?ml$/ { next }
+        /\.example$/ { next }
+        /^infra\/monitoring\// { next }
+        /^argocd\// { next }
+        { print }
+      '
+    )
+
+    printf 'validating %d files\n' "${#files[@]}"
+
+    if [ "${#files[@]}" -eq 0 ]; then
+      echo "No plain Kubernetes manifests found"
+      exit 0
+    fi
+
+    printf '%s\n' "${files[@]}"
+
+    kubeconform -strict -ignore-missing-schemas -summary \
+      -schema-location "$SCHEMA_DEFAULT" \
+      -schema-location "$SCHEMA_CRD" \
+      "${files[@]}"
