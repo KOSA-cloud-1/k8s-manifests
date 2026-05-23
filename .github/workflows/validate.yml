@@ -13,8 +13,9 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
+
     env:
-      KUSTOMIZE_VERSION: v5.4.3
+      KUSTOMIZE_VERSION: 5.4.3
       KUBECONFORM_VERSION: v0.6.7
       # 기본 k8s 스키마 + CRD 카탈로그(ServiceMonitor/PrometheusRule/ExternalSecret/metallb 등)
       SCHEMA_DEFAULT: default
@@ -27,10 +28,17 @@ jobs:
         run: |
           set -euo pipefail
 
-          curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | tar -xz
+          KUSTOMIZE_URL="https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz"
+          KUBECONFORM_URL="https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz"
+
+          echo "Downloading kustomize from: ${KUSTOMIZE_URL}"
+          curl -fSL "${KUSTOMIZE_URL}" -o kustomize.tar.gz
+          tar -xzf kustomize.tar.gz
           sudo install -m 0755 kustomize /usr/local/bin/kustomize
 
-          curl -sL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | tar -xz kubeconform
+          echo "Downloading kubeconform from: ${KUBECONFORM_URL}"
+          curl -fSL "${KUBECONFORM_URL}" -o kubeconform.tar.gz
+          tar -xzf kubeconform.tar.gz kubeconform
           sudo install -m 0755 kubeconform /usr/local/bin/kubeconform
 
           kustomize version
@@ -57,12 +65,12 @@ jobs:
       # ② 일반 매니페스트: 쿠버네티스 스키마 검증
       #    제외:
       #    - .github workflow
-      #    - helm values
       #    - kustomization.yaml
+      #    - helm values
       #    - *.example
       #    - kustomize build로 이미 검증하는 디렉터리
       #    - argocd Application
-      - name: kubeconform (plain manifests)
+      - name: kubeconform plain manifests
         run: |
           set -euo pipefail
 
