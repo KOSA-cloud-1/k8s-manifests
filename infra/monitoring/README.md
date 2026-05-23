@@ -92,11 +92,14 @@ kubectl -n monitoring port-forward svc/kube-prometheus-stack-grafana 3000:80
 Prometheus는 `servicemonitor/photo-service-servicemonitor.yaml`을 통해 `apps` namespace의
 `photo-service` Service `http` port를 scrape한다.
 
+- 계측 대상은 **AI 변환 엔드포인트 `GET /photos/ai/{object_key}`** 
 - 노출 metric (이름은 기존 dashboard/alert와 동일):
   `profile_image_requests_total`, `profile_image_success_total`,
-  `profile_image_failed_total`, `profile_image_processing_seconds`(histogram),
+  `profile_image_failed_total`(429 거부 포함), `profile_image_processing_seconds`(histogram),
   `profile_image_queue_depth`, `profile_image_active_jobs`
-- `profile_image_queue_depth`는 앱 내부 큐가 없으므로 0으로 노출한다.
+- AI 변환은 `asyncio.Semaphore(10)`로 동시 10개로 제한된다.
+  `profile_image_active_jobs`=세마포어 점유(처리 중), `profile_image_queue_depth`=획득 대기 수로 동적 노출된다.
+- `profile_image_processing_seconds` 버킷은 AI 지연을 감안해 0.5~120s로 확장했다.
 
 
 ### gateway metric (http_request_duration_seconds)

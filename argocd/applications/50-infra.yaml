@@ -12,7 +12,10 @@ spec:
     targetRevision: dev
     path: infra
     directory:
-      recurse: true
+      # recurse 하지 않음: infra/monitoring 은 전용 앱(monitoring-observability)이 소유한다.
+      # recurse: true 로 두면 infra/monitoring/** 까지 중복 소유(SharedResourceWarning)하고
+      # infra/monitoring/kustomization.yaml 을 raw manifest 로 적용하려다 SyncError 가 난다.
+      recurse: false
       exclude: 'metallb-config.yaml'
   destination:
     server: 'https://kubernetes.default.svc'
