@@ -245,6 +245,150 @@ helm uninstall loki -n monitoring
 helm uninstall promtail -n monitoring
 ```
 
+## 자주 쓰는 LogQL 쿼리
+
+Grafana → Explore에서 데이터소스를 **Loki**로 바꾼 뒤 사용한다. (완성된 패널은 `Loki Log Monitoring` 대시보드 참고)
+
+### 사용 가능한 라벨
+
+Promtail이 모든 컨테이너 로그에 붙이는 주요 라벨:
+
+| 라벨 | 의미 | 예시 값 |
+|---|---|---|
+| `namespace` | 네임스페이스 | `apps`, `data`, `ingress-nginx`, `argocd`, `monitoring` |
+| `app` | 앱 이름(`app` 또는 `app.kubernetes.io/name`) | `photo-service`, `gateway`, `auth-server`, `employee-server`, `nginx`, `galera` |
+| `pod` | 파드 이름 | `photo-service-7d9...` |
+| `container` | 컨테이너 이름 | |
+| `node_name` | 노드 이름 | `worker2` |
+
+> `filename` 라벨은 promtail에서 drop했다. `user_id`/`request_id`/`image_id`처럼 자주 바뀌는 값은 **라벨이 아니라 로그 본문**에 있으므로 `|=`/`|~` 라인 필터로 찾는다(label cardinality 보호). 실제 가용 라벨은 Explore의 **Label browser**로 확인한다.
+>
+> **쿼리 원칙:** 먼저 라벨 `{namespace=..., app=...}`로 스트림을 좁히고, 그다음 `|=`(부분일치)·`|~`(정규식, `(?i)`로 대소문자 무시)로 라인을 필터한다.
+
+### photo-service (AI 이미지 변환) — 핵심 서비스
+
+```logql
+# 전체 로그
+{namespace="apps", app="photo-service"}
+
+# ERROR 로그만
+{namespace="apps", app="photo-service"} |= "ERROR"
+
+# 이미지 변환 실패 (여러 표현 동시 매칭)
+{namespace="apps", app="photo-service"} |~ "(?i)convert failed|conversion failed|변환 실패"
+
+# Python 예외/트레이스백
+{namespace="apps", app="photo-service"} |~ "Traceback|Exception|Error"
+
+# 특정 파드만 (HPA로 늘어난 파드 디버깅)
+{namespace="apps", app="photo-service", pod=~"photo-service.*"}
+
+# 에러 발생률 (지난 5분, 그래프)
+sum(rate({namespace="apps", app="photo-service"} |= "ERROR" [5m]))
+
+# 변환 실패 누적 건수 (지난 1시간)
+sum(count_over_time({namespace="apps", app="photo-service"} |~ "(?i)convert failed" [1h]))
+```
+
+앱이 JSON 로그를 출력하면 필드로 필터·집계할 수 있다(키 이름은 실제 포맷에 맞춰 조정):
+
+```logql
+{namespace="apps", app="photo-service"} | json | level="ERROR"
+{namespace="apps", app="photo-service"} | json | duration_seconds > 5 | line_format "{{.message}}"
+```
+
+### gateway / auth-server / employee-server (백엔드)
+
+```logql
+# gateway ERROR/WARN
+{namespace="apps", app="gateway"} |~ "ERROR|WARN"
+
+# gateway 5xx 응답 (액세스 로그 포맷에 맞춰 조정)
+{namespace="apps", app="gateway"} |~ " 5[0-9]{2} "
+
+# 인증 실패
+{namespace="apps", app="auth-server"} |~ "(?i)unauthorized|401|login failed|authentication failed"
+
+# employee-server ERROR
+{namespace="apps", app="employee-server"} |= "ERROR"
+
+# apps 네임스페이스 전체 에러를 한 번에
+{namespace="apps"} |~ "(?i)error|exception|fatal"
+```
+
+### ingress-nginx (트래픽 입구)
+
+```logql
+# 5xx 응답 로그
+{namespace="ingress-nginx"} |~ " 5[0-9]{2} "
+
+# 502/503/504만
+{namespace="ingress-nginx"} |~ " (502|503|504) "
+
+# 특정 경로/호스트 트래픽
+{namespace="ingress-nginx"} |= "/api/profile"
+
+# 5xx 발생률 (그래프/알림용)
+sum(rate({namespace="ingress-nginx"} |~ " 5[0-9]{2} " [5m]))
+
+# access log를 파싱해 status code로 필터 (nginx 기본 포맷 예시)
+{namespace="ingress-nginx"} | pattern `<_> - - <_> "<method> <path> <_>" <status> <_>` | status >= 500
+```
+
+### galera (MariaDB, namespace: data)
+
+```logql
+# 에러
+{namespace="data", app="galera"} |~ "(?i)error"
+
+# 클러스터/복제 이슈 (wsrep, SST, 동기화)
+{namespace="data", app="galera"} |~ "(?i)wsrep|sst|cluster|sync|deadlock"
+
+# 연결 문제
+{namespace="data", app="galera"} |~ "(?i)too many connections|access denied|aborted connection"
+```
+
+### argocd (GitOps)
+
+```logql
+# 전체 에러/경고
+{namespace="argocd"} |~ "level=(error|warning)"
+
+# application-controller만 (sync 실패, SharedResource 등)
+{namespace="argocd", pod=~"argocd-application-controller.*"} |= "level=error"
+
+# 특정 앱 sync 추적
+{namespace="argocd"} |= "monitoring-observability"
+```
+
+### 클러스터 트러블슈팅
+
+```logql
+# 특정 노드의 에러 (예: worker2 CNI 디버깅)
+{node_name="worker2"} |~ "(?i)error"
+
+# calico(CNI) 로그 — calico는 app 라벨이 아닐 수 있어 pod 이름으로 매칭
+{namespace="kube-system", pod=~"calico-node.*"} |~ "(?i)error|felix|bird"
+
+# 메모리/OOM 흔적
+{namespace="apps"} |~ "(?i)out of memory|oomkill|memoryerror"
+```
+
+### 집계·랭킹 (대시보드/알림용)
+
+```logql
+# 앱별 에러 로그 발생률
+sum by (app) (rate({namespace="apps"} |~ "(?i)error" [5m]))
+
+# 로그를 가장 많이 뿜는 앱 Top 5
+topk(5, sum by (app) (rate({namespace="apps"} [5m])))
+
+# ingress 5xx 분당 건수
+sum(count_over_time({namespace="ingress-nginx"} |~ " 5[0-9]{2} " [1m]))
+```
+
+> 위 키워드(`convert failed`, `ERROR`, status code 등)는 각 앱의 실제 로그 출력 형식에 맞춰 조정한다. Explore에서 먼저 `{namespace="apps", app="..."}`로 원본 로그를 확인한 뒤 필터 문자열을 정하는 것을 권장한다.
+
 ---
 
 # Alertmanager 설정
