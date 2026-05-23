@@ -51,7 +51,7 @@ spec:
             memory: 6Gi
         startupProbe:
           httpGet:
-            path: /health
+            path: /photo-service/health
             port: 5003
           failureThreshold: 60
           periodSeconds: 10
@@ -59,7 +59,7 @@ spec:
 
         livenessProbe:
           httpGet:
-            path: /health
+            path: /photo-service/health
             port: 5003
           initialDelaySeconds: 30
           periodSeconds: 30
@@ -68,7 +68,7 @@ spec:
 
         readinessProbe:
           httpGet:
-            path: /ready
+            path: /photo-service/ready
             port: 5003
           initialDelaySeconds: 5
           periodSeconds: 5
