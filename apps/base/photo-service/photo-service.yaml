@@ -41,7 +41,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: photo-service
-        image: kosa1team/photo-service:d9877102e954ee6d272923702511b75bfc7a4433
+        image: photo-service   # registry/user + tag 는 overlay images[] 가 주입 (CI가 DOCKERHUB_USERNAME 으로 갱신)
         imagePullPolicy: Always
         ports:
         - containerPort: 5003

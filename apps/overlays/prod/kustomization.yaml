@@ -11,16 +11,22 @@ resources:
   - hpa.yaml
   - pdb.yaml
 
-# 이미지 태그는 app repo CI가 main push 시 이 블록의 newTag를 갱신한다.
-# (dev push 는 overlays/dev/kustomization.yaml 의 newTag 를 갱신)
+# name = base 의 논리 이미지명. newName(=registry/user) 과 newTag 는 app repo CI 가
+# main push 시 DOCKERHUB_USERNAME(newName)·커밋 SHA(newTag)로 갱신한다.
+# (dev push 는 overlays/dev/kustomization.yaml 을 갱신)
 images:
-  - name: kosa1team/auth-server
+  - name: auth-server
+    newName: kosa1team/auth-server
     newTag: d9877102e954ee6d272923702511b75bfc7a4433
-  - name: kosa1team/employee-server
+  - name: employee-server
+    newName: kosa1team/employee-server
     newTag: d9877102e954ee6d272923702511b75bfc7a4433
-  - name: kosa1team/gateway
+  - name: gateway
+    newName: kosa1team/gateway
     newTag: d9877102e954ee6d272923702511b75bfc7a4433
-  - name: kosa1team/photo-service
+  - name: photo-service
+    newName: kosa1team/photo-service
     newTag: d9877102e954ee6d272923702511b75bfc7a4433
-  - name: kosa1team/frontend
+  - name: frontend
+    newName: kosa1team/frontend
     newTag: d9877102e954ee6d272923702511b75bfc7a4433

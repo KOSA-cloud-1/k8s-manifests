@@ -28,7 +28,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: nginx
-        image: kosa1team/frontend:d9877102e954ee6d272923702511b75bfc7a4433
+        image: frontend   # registry/user + tag 는 overlay images[] 가 주입 (CI가 DOCKERHUB_USERNAME 으로 갱신)
         ports:
         - containerPort: 80
         securityContext:

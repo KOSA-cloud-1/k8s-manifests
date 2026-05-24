@@ -8,18 +8,23 @@ resources:
   - ../../base
   - ingress.yaml
   - external-secrets.yaml
-# dev 이미지 태그: app repo CI 가 dev push 시 이 newTag 를 갱신한다.
-# 초기값은 현재 운영 태그와 동일하게 두어 dev 환경이 곧바로 기동되게 한다.
+# name = base 의 논리 이미지명. newName(=registry/user) 과 newTag 는 app repo CI 가
+# dev push 시 DOCKERHUB_USERNAME(newName)·커밋 SHA(newTag)로 갱신한다.
 images:
-  - name: kosa1team/auth-server
+  - name: auth-server
+    newName: kosa1team/auth-server
     newTag: d9877102e954ee6d272923702511b75bfc7a4433
-  - name: kosa1team/employee-server
+  - name: employee-server
+    newName: kosa1team/employee-server
     newTag: d9877102e954ee6d272923702511b75bfc7a4433
-  - name: kosa1team/gateway
+  - name: gateway
+    newName: kosa1team/gateway
     newTag: d9877102e954ee6d272923702511b75bfc7a4433
-  - name: kosa1team/photo-service
+  - name: photo-service
+    newName: kosa1team/photo-service
     newTag: d9877102e954ee6d272923702511b75bfc7a4433
-  - name: kosa1team/frontend
+  - name: frontend
+    newName: kosa1team/frontend
     newTag: d9877102e954ee6d272923702511b75bfc7a4433
 patches:
   # dev 는 평소 0 replica (on-demand): 리소스를 거의 점유하지 않는다.

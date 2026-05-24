@@ -59,16 +59,16 @@ apps/
 
 ## dev on-demand 운용 (리소스 절약)
 
-dev 는 "항상 떠 있는 환경"이 아니라 **검증/시연할 때만 켜는 환경**이다. overlay 의 desired
+dev 는 "항상 떠 있는 환경"이 아니라 **main 머지 전 검증할 때만 잠깐 켜는 환경**이다. overlay 의 desired
 replicas 는 0 이라 평소엔 Pod 가 없고 추가 리소스 점유가 거의 없다. `kosa-apps-dev` 의
 `ignoreDifferences(.spec.replicas)` 덕분에 아래 수동 scale 을 ArgoCD 가 0 으로 되돌리지 않는다.
 
 ```bash
-# dev 켜기 (테스트/시연 직전)
+# dev 켜기 (검증 직전)
 kubectl -n apps-dev scale deploy --all --replicas=1
 kubectl -n apps-dev rollout status deploy/photo-service   # 기동 확인
 
-# dev 끄기 (테스트 끝나면)
+# dev 끄기 (검증 끝나면)
 kubectl -n apps-dev scale deploy --all --replicas=0
 ```
 
@@ -76,6 +76,19 @@ kubectl -n apps-dev scale deploy --all --replicas=0
   (worker3~6)로 스케줄된다 → prod 와 노드 경합 없음.
 - **새 dev 이미지를 push 하면** overlay 가 갱신·sync 되며 desired replicas=0 이 다시 적용된다.
   즉 dev 가 자동으로 0 으로 내려가니, 새 이미지를 테스트하려면 위 scale 명령으로 다시 켠다.
+
+## 시연(demo)은 prod 에서 한다
+
+부하 → HPA 스케일아웃 → Grafana 관측으로 이어지는 **라이브 시연은 prod(`apps`)에서 수행한다.**
+- prod 만 HPA(photo `min2/max4`, gateway `min2/max4`)가 있어 부하 시 실제로 replica 가 늘어난다.
+- dev 는 HPA 가 없고 평소 0 replica(on-demand)라 스케일링 시연 자체가 불가능하다.
+
+dev 는 시연 "대상"이 아니라 **dev/운영 분리 구조의 증빙**으로 보여준다(켤 필요 없음):
+
+```bash
+kubectl get ns apps apps-dev                  # 네임스페이스 2개로 분리
+kubectl get applications -n argocd | grep kosa-apps   # kosa-apps(운영) / kosa-apps-dev(개발)
+```
 
 ## 적용 / 확인
 
@@ -105,8 +118,11 @@ curl -H "Host: dev.kosa.local" http://172.17.128.240/
    돌게 하려면 이 `deploy.yml` 변경을 `dev` 뿐 아니라 `main` 에도 머지해야 한다.
    (안 하면 `main` push 시 기존 "dev 트리거 전용" 워크플로우가 실행되어 prod 갱신이 안 됨)
 
-2. **이미지 레지스트리 이름 일치.** overlay `images[].name` 은 `kosa1team/<service>` 로 하드코딩돼 있다.
-   CI 의 `DOCKERHUB_USERNAME` 이 `kosa1team` 이 아니면 태그 갱신 매칭이 안 되니, 둘을 일치시킨다.
+2. **레지스트리/계정은 시크릿으로 주입된다(하드코딩 분리됨).** base 는 이미지를 논리명(`photo-service` 등)으로만
+   두고, overlay `images[].newName` 에 registry/user(`kosa1team/...`)·`newTag` 에 SHA 를 CI 가
+   `DOCKERHUB_USERNAME`·커밋 SHA 로 매번 갱신한다. DockerHub 계정을 바꾸면 `DOCKERHUB_USERNAME` 시크릿만
+   교체하면 다음 push 때 newName 이 전부 다시 써진다(매니페스트 수정 불필요).
+   ※ overlay `images[].name`(논리명)은 app CI 의 매칭 키(`$service`)와 일치해야 한다.
 
 3. **dev 는 운영 DB·Ceph 를 공유한다 (격리 수준: "공유형").**
    `overlays/dev/external-secrets.yaml` 이 운영과 동일한 AWS 키(`prod/mariadb`, `prod/ceph`)를 재사용하고,
