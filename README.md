@@ -9,7 +9,7 @@
 |---|---|
 | `argocd/` | app-of-apps root(`argo-app.yaml`) + child Application(`applications/`) |
 | `namespaces/` | 네임스페이스 정의 |
-| `apps/` | 앱 워크로드(gateway, auth-server, employee-server, photo-service, frontend) + NetworkPolicy/PDB/HPA |
+| `apps/` | 앱 워크로드 — **Kustomize `base` + `overlays/{prod,dev}`** (dev/운영 네임스페이스 분리). 상세는 `apps/README.md` |
 | `galera/` | MariaDB Galera StatefulSet (`data` ns) |
 | `storage/ceph-csi-rbd/` | Ceph CSI RBD StorageClass/리소스 |
 | `external-secrets/` | External Secrets Operator + ExternalSecret(AWS Secrets Manager) |
@@ -24,6 +24,7 @@
 | 문서 | 내용 |
 |---|---|
 | 이 문서(최상위) | 전체 구조 / 배포 순서 / Secret / Storage / Galera / Ingress |
+| `apps/README.md` | **dev/prod 환경 분리(Kustomize overlay), on-demand dev, 이미지 태그/registry 주입** |
 | `infra/monitoring/README.md` | 모니터링·알림·대시보드·HPA 상세 |
 | `external-secrets/README.md` | ExternalSecret / AWS Secrets Manager 매핑 |
 | `storage/ceph-csi-rbd/README.md` | Ceph CSI RBD |
@@ -32,7 +33,8 @@
 
 ## Namespace
 
-- `apps`: gateway, auth-server, employee-server, photo-service, frontend, Ingress
+- `apps`: gateway, auth-server, employee-server, photo-service, frontend, Ingress (PROD overlay)
+- `apps-dev`: 동일 워크로드의 dev overlay (on-demand, 평소 0 replica)
 - `data`: Galera StatefulSet, DB Service
 - `backup`: photo backup CronJob
 - `monitoring`: kube-prometheus-stack, Grafana, Alertmanager, local PV
@@ -178,13 +180,15 @@ bash deploy.sh
 `deploy.sh` loads `external-secrets/secrets.env`. To use another file, run
 `SECRETS_ENV_FILE=/path/to/secrets.env bash deploy.sh`.
 
-`argocd/argo-app.yaml`은 app-of-apps root Application입니다. 하위 Application은
-`argocd/applications/`에서 관리합니다.
+`argocd/argo-app.yaml`은 app-of-apps root Application(최초 부트스트랩용)입니다. 하위 Application은
+`argocd/applications/`에서 관리하며, root 자신도 `argocd/applications/00-kosa-platform.yaml`로
+**self-managed**되어 `targetRevision: dev`가 self-heal됩니다(수동 revision 드리프트 방지).
 
 child Application 인벤토리 (sync-wave 오름차순 = 배포 순서):
 
 | wave | Application | source | namespace |
 |---|---|---|---|
+| -40 | kosa-platform (self-managed root) | `argocd/applications/` | argocd |
 | -30 | kosa-namespaces | `namespaces/` | default |
 | -25 | metallb | chart metallb 0.15.3 | metallb-system |
 | -24 | metallb-config | `infra/` | metallb-system |
@@ -195,7 +199,8 @@ child Application 인벤토리 (sync-wave 오름차순 = 배포 순서):
 | -8 | ceph-csi-rbd | chart ceph-csi-rbd 3.16.2 | ceph-csi-rbd |
 | -5 | kosa-storage | `storage/ceph-csi-rbd/` | ceph-csi-rbd |
 | 0 | kosa-data | `galera/` | data |
-| 10 | kosa-apps | `apps/` | apps |
+| 10 | kosa-apps | `apps/overlays/prod` | apps |
+| 10 | kosa-apps-dev | `apps/overlays/dev` | apps-dev |
 | 20 | kosa-infra | `infra/` | apps |
 | 30 | kosa-backup | `backup/` | backup |
 | 40 | kosa-monitoring-local-storage | `monitoring/local-storage.yaml` | monitoring |

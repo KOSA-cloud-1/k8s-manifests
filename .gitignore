@@ -17,3 +17,13 @@ monitoring/alertmanager-config.yaml
 # ExternalSecret/ClusterSecretStore manifests for GitOps-managed secrets.
 *secret.yaml
 !external-secrets/**/*.yaml
+
+# Local kubeconfig / 인증서 (평문 자격증명)
+kubeconfig
+*.kubeconfig
+admin.conf
+
+# OS / editor
+.DS_Store
+*.swp
+*~
