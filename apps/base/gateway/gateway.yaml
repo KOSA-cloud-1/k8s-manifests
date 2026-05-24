@@ -4,6 +4,7 @@ metadata:
   name: gateway
 spec:
   replicas: 2          # HPA minReplicas와 정렬 (실제 개수는 HPA가 관리)
+  revisionHistoryLimit: 3   # 옛 ReplicaSet 3개만 유지(초과분 자동 GC)
   strategy:
     type: RollingUpdate
     rollingUpdate:
