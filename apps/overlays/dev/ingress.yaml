@@ -1,0 +1,42 @@
+# dev 전용 Ingress.
+# prod ingress(infra/ingress.yaml)는 host 없는 catch-all 이라, dev 는 반드시 별도 host 로
+# 구분해야 같은 ingress-nginx controller(VIP 172.17.128.240)에서 충돌 없이 공존한다.
+#   - host 일치(dev.kosa.local)  → apps-dev 로 라우팅
+#   - 그 외 모든 host            → prod(apps) catch-all
+# 도메인이 없으므로 접속은 Host 헤더로: curl -H "Host: dev.kosa.local" http://172.17.128.240/
+# 또는 hosts 파일에 "172.17.128.240 dev.kosa.local" 등록.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: myapp-ingress
+  namespace: apps-dev
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: dev.kosa.local
+    http:
+      paths:
+      - path: /photos
+        pathType: Prefix
+        backend:
+          service:
+            name: gateway
+            port:
+              number: 5000
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: gateway
+            port:
+              number: 5000
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nginx
+            port:
+              number: 80

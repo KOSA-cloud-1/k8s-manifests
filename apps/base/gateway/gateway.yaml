@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: gateway
-  namespace: apps
 spec:
   replicas: 2          # HPA minReplicas와 정렬 (실제 개수는 HPA가 관리)
   strategy:
@@ -69,7 +68,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: gateway
-  namespace: apps
   labels:
     app: gateway          # ServiceMonitor.selector.matchLabels 대상
 spec:

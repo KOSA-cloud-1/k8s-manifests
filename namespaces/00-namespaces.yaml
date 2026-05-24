@@ -29,6 +29,13 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
+  name: apps-dev
+  labels:
+    kubernetes.io/metadata.name: apps-dev
+---
+apiVersion: v1
+kind: Namespace
+metadata:
   name: data
   labels:
     kubernetes.io/metadata.name: data

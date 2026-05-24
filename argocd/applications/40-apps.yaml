@@ -1,6 +1,9 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
+  # kosa-apps = PROD 환경 (namespace: apps). DEV 환경은 41-apps-dev.yaml(kosa-apps-dev).
+  # 앱 이름을 그대로 유지해 기존 운영 워크로드의 소유권 churn/다운타임 없이 path 만
+  # raw 디렉터리(apps) → kustomize overlay(apps/overlays/prod) 로 전환한다.
   name: kosa-apps
   namespace: argocd
   annotations:
@@ -10,9 +13,8 @@ spec:
   source:
     repoURL: 'https://github.com/KOSA-cloud-1/k8s-manifests'
     targetRevision: dev
-    path: apps
-    directory:
-      recurse: true
+    # kustomize overlay 디렉터리. ArgoCD 가 kustomization.yaml 을 감지해 kustomize build 한다.
+    path: apps/overlays/prod
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: apps

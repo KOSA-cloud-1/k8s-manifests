@@ -1,0 +1,62 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# DEV 환경 overlay → namespace: apps-dev
+# base 공통 워크로드 + dev 전용 Ingress(host dev.kosa.local) + apps-dev 용 ExternalSecret.
+# HPA/PDB 는 두지 않는다(단일 replica 데모 환경이라 불필요, 오히려 PDB가 drain 막음).
+namespace: apps-dev
+
+resources:
+  - ../../base
+  - ingress.yaml
+  - external-secrets.yaml
+
+# dev 이미지 태그: app repo CI 가 dev push 시 이 newTag 를 갱신한다.
+# 초기값은 현재 운영 태그와 동일하게 두어 dev 환경이 곧바로 기동되게 한다.
+images:
+  - name: kosa1team/auth-server
+    newTag: d9877102e954ee6d272923702511b75bfc7a4433
+  - name: kosa1team/employee-server
+    newTag: d9877102e954ee6d272923702511b75bfc7a4433
+  - name: kosa1team/gateway
+    newTag: d9877102e954ee6d272923702511b75bfc7a4433
+  - name: kosa1team/photo-service
+    newTag: d9877102e954ee6d272923702511b75bfc7a4433
+  - name: kosa1team/frontend
+    newTag: d9877102e954ee6d272923702511b75bfc7a4433
+
+patches:
+  # dev 는 평소 0 replica (on-demand): 리소스를 거의 점유하지 않는다.
+  # 테스트/시연 직전에만 수동으로 올린다:
+  #   kubectl -n apps-dev scale deploy --all --replicas=1
+  # 내릴 때:  kubectl -n apps-dev scale deploy --all --replicas=0
+  # ArgoCD 가 이 수동 replica 를 0 으로 되돌리지 않도록 kosa-apps-dev(41-apps-dev.yaml)에
+  # ignoreDifferences(.spec.replicas) 를 둔다.
+  - target:
+      kind: Deployment
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 0
+  - target:
+      kind: Deployment
+      name: photo-service
+    patch: |-
+      # photo-service 는 prod 에서 4Gi/2CPU(파드당). dev 는 요청량이 작으므로 축소한다.
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: 500m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: 2Gi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: 1000m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: 3Gi
+      # base 의 nodeAffinity 는 photo-service 를 worker1/worker2(prod 전용 대용량 노드)에
+      # 고정한다. dev 는 2Gi 라 여유 노드(worker3~6)에도 뜰 수 있으므로 affinity 를 제거해
+      # prod 와의 노드 경합을 없앤다. (scale-up 시 스케줄러가 여유 노드에 배치)
+      - op: remove
+        path: /spec/template/spec/affinity
