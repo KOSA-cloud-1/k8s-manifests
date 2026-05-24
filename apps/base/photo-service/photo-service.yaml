@@ -4,6 +4,7 @@ metadata:
   name: photo-service
 spec:
   replicas: 2
+  revisionHistoryLimit: 3   # 옛 ReplicaSet 3개만 유지(초과분 자동 GC)
   selector:
     matchLabels:
       app: photo-service

@@ -1,0 +1,32 @@
+# 루트 app-of-apps(kosa-platform)를 self-managed 로 둔다.
+# kosa-platform 은 argocd/applications/ 를 recurse 하므로, 이 파일이 "자기 자신"을 정의해
+# live Application 의 spec(특히 source.targetRevision: dev)을 GitOps 로 self-heal 한다.
+# → 누가 수동으로 `argocd app set kosa-platform --revision <other>` 해도 dev 로 되돌아온다.
+#   (이전에 feature/monitoring-manifest 로 드리프트했던 사고 재발 방지)
+# 주의: argocd/argo-app.yaml 은 최초 부트스트랩용 동일 사본. 두 파일의 spec 은 일치시켜야 한다.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kosa-platform
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-40"   # 루트앱: 가장 먼저 정합
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/KOSA-cloud-1/k8s-manifests'
+    targetRevision: dev
+    path: argocd/applications
+    directory:
+      recurse: true
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground  # 리소스 삭제 순서 보장
+      - ApplyOutOfSyncOnly=true   # 변경된 리소스만 apply (속도 향상)

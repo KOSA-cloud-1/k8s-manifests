@@ -1,3 +1,6 @@
+# 최초 부트스트랩용: `kubectl apply -f argocd/argo-app.yaml`.
+# 이후에는 argocd/applications/00-kosa-platform.yaml 이 이 앱을 self-manage 하여
+# targetRevision=dev 를 self-heal 한다. 두 파일의 spec 은 항상 일치시켜야 한다.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
