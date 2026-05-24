@@ -10,7 +10,6 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: photo-service
-  namespace: apps
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
@@ -31,3 +30,24 @@ spec:
         target:
           type: Utilization
           averageUtilization: 60
+---
+# gateway 오토스케일링 (서비스 입구 프록시).
+# CPU 사용률(파드 requests=500m 대비)이 평균 70%를 넘으면 확장.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: gateway
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: gateway
+  minReplicas: 2
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

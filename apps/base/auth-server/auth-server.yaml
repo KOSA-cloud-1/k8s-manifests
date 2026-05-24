@@ -1,17 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx
-  namespace: apps
+  name: auth-server
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: nginx
+      app: auth-server
   template:
     metadata:
       labels:
-        app: nginx
+        app: auth-server
     spec:
       automountServiceAccountToken: false
       topologySpreadConstraints:
@@ -20,31 +19,24 @@ spec:
         whenUnsatisfiable: ScheduleAnyway
         labelSelector:
           matchLabels:
-            app: nginx
+            app: auth-server
       securityContext:
         runAsNonRoot: true
-        runAsUser: 101
-        fsGroup: 101
+        runAsUser: 1000
+        fsGroup: 1000
         seccompProfile:
           type: RuntimeDefault
       containers:
-      - name: nginx
-        image: kosa1team/frontend:de72bc6c8cc9cb5e7f1218bd89607f621faa93e5
+      - name: auth-server
+        image: kosa1team/auth-server:de72bc6c8cc9cb5e7f1218bd89607f621faa93e5
         ports:
-        - containerPort: 80
+        - containerPort: 5001
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
           capabilities:
             drop:
               - ALL
-        volumeMounts:
-        - name: nginx-cache
-          mountPath: /var/cache/nginx
-        - name: nginx-run
-          mountPath: /var/run
-        - name: nginx-tmp
-          mountPath: /tmp
         resources:
           requests:
             cpu: 500m
@@ -55,21 +47,36 @@ spec:
         livenessProbe:
           httpGet:
             path: /health
-            port: 80
+            port: 5001
           initialDelaySeconds: 10
           periodSeconds: 10
           failureThreshold: 3
         readinessProbe:
           httpGet:
             path: /ready
-            port: 80
+            port: 5001
           initialDelaySeconds: 5
           periodSeconds: 5
           failureThreshold: 3
-      volumes:
-      - name: nginx-cache
-        emptyDir: {}
-      - name: nginx-run
-        emptyDir: {}
-      - name: nginx-tmp
-        emptyDir: {}
+        env:
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: JWT_SECRET_KEY
+        - name: ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: ADMIN_PASSWORD
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-server
+spec:
+  selector:
+    app: auth-server
+  ports:
+  - port: 5001
+    targetPort: 5001

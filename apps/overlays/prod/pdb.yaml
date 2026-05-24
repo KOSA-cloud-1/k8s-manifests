@@ -2,7 +2,6 @@ apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: gateway
-  namespace: apps
 spec:
   maxUnavailable: 1   # HPA로 2~4개 오감: replica 수와 무관하게 "한 번에 1개만 내려감" 보장 (drain 가능)
   selector:
@@ -13,7 +12,6 @@ apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: auth-server
-  namespace: apps
 spec:
   minAvailable: 1
   selector:
@@ -24,7 +22,6 @@ apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: employee-server
-  namespace: apps
 spec:
   minAvailable: 1
   selector:
@@ -35,7 +32,6 @@ apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: photo-service
-  namespace: apps
 spec:
   minAvailable: 1
   selector:
@@ -46,7 +42,6 @@ apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: nginx
-  namespace: apps
 spec:
   minAvailable: 1
   selector:

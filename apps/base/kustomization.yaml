@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# 공통(base) 워크로드: 모든 환경(dev/prod)이 공유하는 Deployment/Service/NetworkPolicy.
+# namespace는 base에서 지정하지 않고, 각 overlay(overlays/dev, overlays/prod)의
+# `namespace:` 변환기가 단일 소스로 주입한다.
+# 이미지 태그도 base에는 기준값만 두고, overlay의 `images:` 변환기로 환경별로 덮는다.
+# HPA / PDB / Ingress 는 환경별로 정책이 달라 base에 두지 않는다(overlay가 소유).
+resources:
+  - auth-server/auth-server.yaml
+  - employee-server/employee-server.yaml
+  - gateway/gateway.yaml
+  - photo-service/photo-service.yaml
+  - frontend/nginx-deployment.yaml
+  - frontend/nginx-service.yaml
+  - networkpolicy.yaml

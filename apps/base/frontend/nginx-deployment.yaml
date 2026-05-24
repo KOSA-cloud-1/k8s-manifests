@@ -1,22 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: gateway
-  namespace: apps
+  name: nginx
 spec:
-  replicas: 2          # HPA minReplicas와 정렬 (실제 개수는 HPA가 관리)
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1         # maxSurge: 업데이트 중 최대로 추가될 수 있는 파드 수
-      maxUnavailable: 1   # maxUnavailable: 업데이트 중 사용 불가능할 수 있는 최대 파드 수
+  replicas: 2
   selector:
     matchLabels:
-      app: gateway
+      app: nginx
   template:
     metadata:
       labels:
-        app: gateway
+        app: nginx
     spec:
       automountServiceAccountToken: false
       topologySpreadConstraints:
@@ -25,24 +19,31 @@ spec:
         whenUnsatisfiable: ScheduleAnyway
         labelSelector:
           matchLabels:
-            app: gateway
+            app: nginx
       securityContext:
         runAsNonRoot: true
-        runAsUser: 1000
-        fsGroup: 1000
+        runAsUser: 101
+        fsGroup: 101
         seccompProfile:
           type: RuntimeDefault
       containers:
-      - name: gateway
-        image: kosa1team/gateway:de72bc6c8cc9cb5e7f1218bd89607f621faa93e5
+      - name: nginx
+        image: kosa1team/frontend:de72bc6c8cc9cb5e7f1218bd89607f621faa93e5
         ports:
-        - containerPort: 5000
+        - containerPort: 80
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
           capabilities:
             drop:
               - ALL
+        volumeMounts:
+        - name: nginx-cache
+          mountPath: /var/cache/nginx
+        - name: nginx-run
+          mountPath: /var/run
+        - name: nginx-tmp
+          mountPath: /tmp
         resources:
           requests:
             cpu: 500m
@@ -53,29 +54,21 @@ spec:
         livenessProbe:
           httpGet:
             path: /health
-            port: 5000
+            port: 80
           initialDelaySeconds: 10
           periodSeconds: 10
           failureThreshold: 3
         readinessProbe:
           httpGet:
             path: /ready
-            port: 5000
+            port: 80
           initialDelaySeconds: 5
           periodSeconds: 5
           failureThreshold: 3
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: gateway
-  namespace: apps
-  labels:
-    app: gateway          # ServiceMonitor.selector.matchLabels 대상
-spec:
-  selector:
-    app: gateway
-  ports:
-  - name: http            # ServiceMonitor.endpoints[].port 가 참조
-    port: 5000
-    targetPort: 5000
+      volumes:
+      - name: nginx-cache
+        emptyDir: {}
+      - name: nginx-run
+        emptyDir: {}
+      - name: nginx-tmp
+        emptyDir: {}

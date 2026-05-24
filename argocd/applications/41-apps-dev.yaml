@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  # kosa-apps-dev = DEV 환경 (namespace: apps-dev).
+  # 같은 k8s-manifests dev 브랜치를 보지만 path 가 apps/overlays/dev 로 달라
+  # PROD(kosa-apps, apps/overlays/prod)와 네임스페이스·이미지 태그가 분리된다.
+  name: kosa-apps-dev
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/KOSA-cloud-1/k8s-manifests'
+    targetRevision: dev
+    path: apps/overlays/dev
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: apps-dev
+  # dev 는 on-demand 운용: overlay 의 desired replicas=0(평소 꺼둠)이지만,
+  # 테스트할 때 `kubectl scale` 로 올린 replica 수를 ArgoCD 가 0 으로 되돌리지 않도록
+  # .spec.replicas 차이를 무시한다. (name 생략 → apps-dev 의 모든 Deployment 적용)
+  # 주의: RespectIgnoreDifferences 는 켜지 않는다. 그래야 최초 생성·신규 dev 이미지 push 시
+  #       desired replicas=0 이 적용되어 "평소 꺼둠"이 보장된다(새 이미지 테스트 시 다시 scale-up).
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jqPathExpressions:
+        - .spec.replicas
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      # apps-dev 네임스페이스는 kosa-namespaces(00-namespaces) 가 먼저 생성한다.
+      - CreateNamespace=false
+      - ApplyOutOfSyncOnly=true
