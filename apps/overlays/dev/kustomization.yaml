@@ -15,15 +15,15 @@ resources:
 # 초기값은 현재 운영 태그와 동일하게 두어 dev 환경이 곧바로 기동되게 한다.
 images:
   - name: kosa1team/auth-server
-    newTag: de72bc6c8cc9cb5e7f1218bd89607f621faa93e5
+    newTag: d9877102e954ee6d272923702511b75bfc7a4433
   - name: kosa1team/employee-server
-    newTag: de72bc6c8cc9cb5e7f1218bd89607f621faa93e5
+    newTag: d9877102e954ee6d272923702511b75bfc7a4433
   - name: kosa1team/gateway
-    newTag: de72bc6c8cc9cb5e7f1218bd89607f621faa93e5
+    newTag: d9877102e954ee6d272923702511b75bfc7a4433
   - name: kosa1team/photo-service
-    newTag: de72bc6c8cc9cb5e7f1218bd89607f621faa93e5
+    newTag: d9877102e954ee6d272923702511b75bfc7a4433
   - name: kosa1team/frontend
-    newTag: de72bc6c8cc9cb5e7f1218bd89607f621faa93e5
+    newTag: d9877102e954ee6d272923702511b75bfc7a4433
 
 patches:
   # dev 는 평소 0 replica (on-demand): 리소스를 거의 점유하지 않는다.

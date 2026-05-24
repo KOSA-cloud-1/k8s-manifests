@@ -15,12 +15,12 @@ resources:
 # (dev push 는 overlays/dev/kustomization.yaml 의 newTag 를 갱신)
 images:
   - name: kosa1team/auth-server
-    newTag: de72bc6c8cc9cb5e7f1218bd89607f621faa93e5
+    newTag: d9877102e954ee6d272923702511b75bfc7a4433
   - name: kosa1team/employee-server
-    newTag: de72bc6c8cc9cb5e7f1218bd89607f621faa93e5
+    newTag: d9877102e954ee6d272923702511b75bfc7a4433
   - name: kosa1team/gateway
-    newTag: de72bc6c8cc9cb5e7f1218bd89607f621faa93e5
+    newTag: d9877102e954ee6d272923702511b75bfc7a4433
   - name: kosa1team/photo-service
-    newTag: de72bc6c8cc9cb5e7f1218bd89607f621faa93e5
+    newTag: d9877102e954ee6d272923702511b75bfc7a4433
   - name: kosa1team/frontend
-    newTag: de72bc6c8cc9cb5e7f1218bd89607f621faa93e5
+    newTag: d9877102e954ee6d272923702511b75bfc7a4433
