@@ -1,0 +1,26 @@
+# photo-service ServiceMonitor
+#
+# photo-service(FastAPI)가 /metrics 로 profile_image_* metric을 노출하므로
+# Prometheus가 이를 scrape 하도록 한다.
+#  - selector.matchLabels : apps/photo-service Service 의 metadata.labels 와 일치
+#  - endpoints.port        : 해당 Service 의 ports[].name ("http") 와 일치
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: photo-service
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/part-of: monitoring-observability
+spec:
+  namespaceSelector:
+    matchNames:
+      - apps
+  selector:
+    matchLabels:
+      app: photo-service
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 10s

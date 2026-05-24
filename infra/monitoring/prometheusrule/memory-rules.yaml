@@ -1,0 +1,76 @@
+# Memory 중점 alert rules.
+# 사용 metric:
+#   container_memory_working_set_bytes (cAdvisor)
+#   kube_pod_container_resource_limits/requests{resource="memory"} (kube-state-metrics)
+#   kube_pod_container_status_last_terminated_reason{reason="OOMKilled"} (kube-state-metrics)
+#   node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes (node-exporter)
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: memory-rules
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/part-of: monitoring-observability
+spec:
+  groups:
+    - name: memory.rules
+      rules:
+        - alert: ContainerMemoryNearLimit
+          expr: |
+            (
+              sum by (namespace, pod, container) (
+                container_memory_working_set_bytes{container!="", container!="POD"}
+              )
+              /
+              sum by (namespace, pod, container) (
+                kube_pod_container_resource_limits{resource="memory"}
+              )
+            ) > 0.9
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Container memory near its limit"
+            description: "{{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) 메모리 사용이 limit의 90%를 5분 이상 초과 — OOMKill 위험."
+
+        - alert: PodOOMKilled
+          expr: |
+            increase(kube_pod_container_status_restarts_total[10m]) > 0
+            and on (namespace, pod, container)
+            kube_pod_container_status_last_terminated_reason{reason="OOMKilled"} == 1
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Container was OOMKilled"
+            description: "{{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) 컨테이너가 최근 10분 내 OOMKilled로 재시작됨."
+
+        - alert: PhotoServiceMemoryHighVsRequest
+          expr: |
+            (
+              sum by (pod) (
+                container_memory_working_set_bytes{namespace="apps", pod=~"photo-service.*", container!="", container!="POD"}
+              )
+              /
+              sum by (pod) (
+                kube_pod_container_resource_requests{namespace="apps", pod=~"photo-service.*", resource="memory"}
+              )
+            ) > 0.8
+          for: 5m
+          labels:
+            severity: warning
+            service: photo-service
+          annotations:
+            summary: "photo-service memory high vs request"
+            description: "photo-service 파드({{ $labels.pod }}) 메모리가 request(4Gi)의 80%를 초과 — HPA(memory 60%) 목표를 웃돎/용량 점검 필요."
+
+        - alert: NodeMemoryAvailableLow
+          expr: |
+            (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 < 10
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Node available memory low"
+            description: "노드 {{ $labels.instance }} 가용 메모리가 10% 미만으로 5분 이상 지속."

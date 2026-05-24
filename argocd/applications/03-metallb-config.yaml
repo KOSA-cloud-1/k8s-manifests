@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: metallb-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-24"
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/KOSA-cloud-1/k8s-manifests'
+    targetRevision: dev
+    path: infra
+    directory:
+      include: 'metallb-config.yaml'
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: metallb-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - SkipDryRunOnMissingResource=true
+      - ApplyOutOfSyncOnly=true

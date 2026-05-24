@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+spec:
+  replicas: 2          # HPA minReplicas와 정렬 (실제 개수는 HPA가 관리)
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1         # maxSurge: 업데이트 중 최대로 추가될 수 있는 파드 수
+      maxUnavailable: 1   # maxUnavailable: 업데이트 중 사용 불가능할 수 있는 최대 파드 수
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      automountServiceAccountToken: false
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app: gateway
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: gateway
+        image: gateway   # registry/user + tag 는 overlay images[] 가 주입 (CI가 DOCKERHUB_USERNAME 으로 갱신)
+        ports:
+        - containerPort: 5000
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  labels:
+    app: gateway          # ServiceMonitor.selector.matchLabels 대상
+spec:
+  selector:
+    app: gateway
+  ports:
+  - name: http            # ServiceMonitor.endpoints[].port 가 참조
+    port: 5000
+    targetPort: 5000

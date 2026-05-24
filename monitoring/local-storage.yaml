@@ -1,0 +1,137 @@
+# Static local storage for the dedicated monitoring node.
+#
+# Prepare exactly one node with:
+#   kubectl label node <node-name> dedicated=monitoring
+#   kubectl taint node <node-name> dedicated=monitoring:NoSchedule
+#
+# Then create these directories on that node:
+#   /mnt/monitoring/prometheus
+#   /mnt/monitoring/alertmanager
+#   /mnt/monitoring/grafana
+#   /mnt/monitoring/loki
+#
+# Recommended disk size for the monitoring node: 200Gi or larger.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: monitoring-local
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+allowVolumeExpansion: false
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: monitoring-prometheus-pv
+  labels:
+    monitoring.kosa.io/component: prometheus
+spec:
+  capacity:
+    storage: 100Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: monitoring-local
+  local:
+    path: /mnt/monitoring/prometheus
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: dedicated
+              operator: In
+              values:
+                - monitoring
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: monitoring-alertmanager-pv
+  labels:
+    monitoring.kosa.io/component: alertmanager
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: monitoring-local
+  local:
+    path: /mnt/monitoring/alertmanager
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: dedicated
+              operator: In
+              values:
+                - monitoring
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: monitoring-grafana-pv
+  labels:
+    monitoring.kosa.io/component: grafana
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: monitoring-local
+  local:
+    path: /mnt/monitoring/grafana
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: dedicated
+              operator: In
+              values:
+                - monitoring
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: monitoring-loki-pv
+  labels:
+    monitoring.kosa.io/component: loki
+spec:
+  capacity:
+    storage: 60Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: monitoring-local
+  local:
+    path: /mnt/monitoring/loki
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: dedicated
+              operator: In
+              values:
+                - monitoring
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-storage
+  namespace: monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: monitoring-local
+  selector:
+    matchLabels:
+      monitoring.kosa.io/component: grafana
+  resources:
+    requests:
+      storage: 10Gi

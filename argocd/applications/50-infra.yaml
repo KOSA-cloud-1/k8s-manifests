@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kosa-infra
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/KOSA-cloud-1/k8s-manifests'
+    targetRevision: dev
+    path: infra
+    directory:
+      # recurse 하지 않음: infra/monitoring 은 전용 앱(monitoring-observability)이 소유한다.
+      # recurse: true 로 두면 infra/monitoring/** 까지 중복 소유(SharedResourceWarning)하고
+      # infra/monitoring/kustomization.yaml 을 raw manifest 로 적용하려다 SyncError 가 난다.
+      recurse: false
+      exclude: 'metallb-config.yaml'
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: apps
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ApplyOutOfSyncOnly=true

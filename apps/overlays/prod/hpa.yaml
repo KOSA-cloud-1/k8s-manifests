@@ -1,0 +1,53 @@
+# photo-service 오토스케일링 — 메모리 사용률이 주 기준 (CPU는 보조).
+# 이 서비스는 CPU를 거의 안 쓰고 메모리(이미지 바이트 보관)가 주요 포인트라 메모리를 1차 트리거로 둔다.
+# - 메모리 60% (파드 requests=4Gi 대비 =2.4Gi): 요청당 ~300MB → 동시 ~8건 수준에서 도달(실질 트리거).
+# - CPU 60% (requests=2 CPU 대비): 거의 안 오르므로 사실상 보조/안전망.
+# 동작: scale-up은 CPU/메모리 중 desired 큰 쪽. scale-down은 둘 다 임계 아래일 때(메모리가 주도).
+# 주의 1: 메모리는 부하가 끝나도 잘 안 줄어 scale-down이 늦을 수 있다.
+# 주의 2: photo-service는 메모리 requests=4Gi라 worker3~6(가용 RAM ~3.8Gi)엔 못 뜨고
+#         worker1/worker2(각 ~31Gi)에 스케줄된다. 4Gi/파드라 max 4(=16Gi)는 두 노드 여유로 충분.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: photo-service
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: photo-service
+  minReplicas: 2
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 60
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
+---
+# gateway 오토스케일링 (서비스 입구 프록시).
+# CPU 사용률(파드 requests=500m 대비)이 평균 70%를 넘으면 확장.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: gateway
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: gateway
+  minReplicas: 2
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

@@ -1,0 +1,32 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# PROD 환경 overlay → namespace: apps
+# base 공통 워크로드 + prod 전용 HPA/PDB. Ingress는 infra/ingress.yaml(kosa-infra 앱)이
+# 계속 소유하므로 여기서 만들지 않는다(이중 소유/충돌 방지).
+namespace: apps
+
+resources:
+  - ../../base
+  - hpa.yaml
+  - pdb.yaml
+
+# name = base 의 논리 이미지명. newName(=registry/user) 과 newTag 는 app repo CI 가
+# main push 시 DOCKERHUB_USERNAME(newName)·커밋 SHA(newTag)로 갱신한다.
+# (dev push 는 overlays/dev/kustomization.yaml 을 갱신)
+images:
+  - name: auth-server
+    newName: kosa1team/auth-server
+    newTag: d9877102e954ee6d272923702511b75bfc7a4433
+  - name: employee-server
+    newName: kosa1team/employee-server
+    newTag: d9877102e954ee6d272923702511b75bfc7a4433
+  - name: gateway
+    newName: kosa1team/gateway
+    newTag: d9877102e954ee6d272923702511b75bfc7a4433
+  - name: photo-service
+    newName: kosa1team/photo-service
+    newTag: d9877102e954ee6d272923702511b75bfc7a4433
+  - name: frontend
+    newName: kosa1team/frontend
+    newTag: d9877102e954ee6d272923702511b75bfc7a4433

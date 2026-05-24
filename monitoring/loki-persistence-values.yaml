@@ -1,0 +1,29 @@
+# Persistence overlay for Loki — pins it to the dedicated monitoring node
+# and stores data on the local PV declared in monitoring/local-storage.yaml.
+#
+# Apply together with loki-values.yaml:
+#   helm upgrade --install loki grafana/loki \
+#     --namespace monitoring --create-namespace \
+#     --version 6.29.0 \
+#     -f monitoring/loki-values.yaml \
+#     -f monitoring/loki-persistence-values.yaml
+#
+# Requires monitoring node preparation (see local-storage.yaml header):
+#   sudo mkdir -p /mnt/monitoring/loki
+#   sudo chmod 0777 /mnt/monitoring/loki
+
+singleBinary:
+  nodeSelector:
+    dedicated: monitoring
+  tolerations:
+    - key: dedicated
+      operator: Equal
+      value: monitoring
+      effect: NoSchedule
+  persistence:
+    enabled: true
+    storageClass: monitoring-local
+    size: 60Gi
+    selector:
+      matchLabels:
+        monitoring.kosa.io/component: loki

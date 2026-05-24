@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kosa-monitoring-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "45"
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/KOSA-cloud-1/k8s-manifests'
+    targetRevision: dev
+    path: monitoring
+    directory:
+      include: 'loki-grafana-datasource.yaml'
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true

@@ -1,0 +1,54 @@
+
+# ════════════════════════════════════════════════════════════════
+# 서비스 2개를 만드는 이유:
+#
+# 1. [galera] 헤드리스 서비스
+#    → Galera 노드끼리 서로를 찾기 위한 DNS 이름 제공
+#    → galera-0.galera, galera-1.galera, galera-2.galera 로 통신
+#    → 앱에서는 사용 안 함
+#
+# 2. [mysql] 일반 ClusterIP 서비스
+#    → 앱(employee-server)이 DB에 접속하는 창구
+#    → 3개 노드에 자동으로 로드밸런싱
+#    → 기존 앱 설정(DATABASE_HOST=mysql) 그대로 유지 가능!
+# ════════════════════════════════════════════════════════════════
+
+# ── 1. 헤드리스 서비스: Galera 노드 간 통신용 ──────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: galera
+  namespace: data
+spec:
+  clusterIP: None              # 헤드리스: IP 없이 DNS만 제공
+  publishNotReadyAddresses: true
+  selector:
+    app: galera
+  ports:
+  - name: mysql
+    port: 3306
+    targetPort: 3306
+  - name: sst
+    port: 4444
+    targetPort: 4444
+  - name: replication
+    port: 4567
+    targetPort: 4567
+  - name: ist
+    port: 4568
+    targetPort: 4568
+
+---
+# ── 2. ClusterIP 서비스: 앱 → DB 접속용 ──────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql                  # 기존 이름 유지 → 앱 코드 수정 불필요!
+  namespace: data
+spec:
+  selector:
+    app: galera                # galera 파드들에게 연결
+  ports:
+  - name: mysql
+    port: 3306
+    targetPort: 3306
