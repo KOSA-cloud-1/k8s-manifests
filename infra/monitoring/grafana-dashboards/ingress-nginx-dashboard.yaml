@@ -44,14 +44,14 @@ data:
         "to": "now"
       },
       "timezone": "",
-      "title": "Ingress NGINX Monitoring",
+      "title": "Ingress NGINX 모니터링",
       "uid": "ingress-nginx",
       "refresh": "30s",
       "panels": [
         {
           "id": 1,
           "type": "timeseries",
-          "title": "Ingress Request Rate",
+          "title": "Ingress 요청률",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -82,7 +82,7 @@ data:
         {
           "id": 2,
           "type": "timeseries",
-          "title": "HTTP Status Code Rate",
+          "title": "HTTP 상태코드별 요청률",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -113,7 +113,7 @@ data:
         {
           "id": 3,
           "type": "timeseries",
-          "title": "5xx Error Rate",
+          "title": "5xx 오류율",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -144,7 +144,7 @@ data:
         {
           "id": 4,
           "type": "timeseries",
-          "title": "P95 Request Duration (s)",
+          "title": "P95 요청 처리시간 (s)",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -177,7 +177,7 @@ data:
         {
           "id": 5,
           "type": "timeseries",
-          "title": "4xx Error Rate",
+          "title": "4xx 오류율",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -208,7 +208,7 @@ data:
         {
           "id": 6,
           "type": "timeseries",
-          "title": "Gateway-Class Edge Errors",
+          "title": "게이트웨이 엣지 오류 (502/503/504)",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"

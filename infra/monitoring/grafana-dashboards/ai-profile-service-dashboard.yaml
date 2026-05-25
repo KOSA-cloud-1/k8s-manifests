@@ -44,14 +44,14 @@ data:
         "to": "now"
       },
       "timezone": "",
-      "title": "AI Profile Service Monitoring",
+      "title": "AI 프로필 서비스 모니터링",
       "uid": "ai-profile-service",
       "refresh": "30s",
       "panels": [
         {
           "id": 1,
           "type": "stat",
-          "title": "Request Rate (req/s)",
+          "title": "요청률 (req/s)",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -81,7 +81,7 @@ data:
         {
           "id": 2,
           "type": "stat",
-          "title": "Success Rate (req/s)",
+          "title": "성공률 (req/s)",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -111,7 +111,7 @@ data:
         {
           "id": 3,
           "type": "stat",
-          "title": "Failure Rate (req/s)",
+          "title": "실패율 (req/s)",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -141,7 +141,7 @@ data:
         {
           "id": 4,
           "type": "timeseries",
-          "title": "Processing Latency P95 (s)",
+          "title": "처리 지연 P95 (s)",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -173,7 +173,7 @@ data:
         {
           "id": 5,
           "type": "stat",
-          "title": "Active Jobs",
+          "title": "처리 중 작업 수",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -203,7 +203,7 @@ data:
         {
           "id": 6,
           "type": "stat",
-          "title": "Queue Depth",
+          "title": "대기 큐 길이",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -233,7 +233,7 @@ data:
         {
           "id": 7,
           "type": "timeseries",
-          "title": "Pod CPU Usage",
+          "title": "Pod CPU 사용량",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -264,7 +264,7 @@ data:
         {
           "id": 8,
           "type": "timeseries",
-          "title": "Pod Memory Usage",
+          "title": "Pod 메모리 사용량",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -297,7 +297,7 @@ data:
         {
           "id": 9,
           "type": "timeseries",
-          "title": "Pod Restart Count",
+          "title": "Pod 재시작 횟수",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -328,7 +328,7 @@ data:
         {
           "id": 10,
           "type": "timeseries",
-          "title": "Photo API Request Rate by Handler",
+          "title": "Photo API Handler별 요청률",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -362,7 +362,7 @@ data:
         {
           "id": 11,
           "type": "timeseries",
-          "title": "Photo API Status Code Rate",
+          "title": "Photo API 상태코드별 요청률",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -396,7 +396,7 @@ data:
         {
           "id": 12,
           "type": "timeseries",
-          "title": "Photo API P95 Latency by Handler",
+          "title": "Photo API Handler별 P95 지연",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -430,7 +430,7 @@ data:
         {
           "id": 13,
           "type": "timeseries",
-          "title": "Photo-service Replicas",
+          "title": "Photo-service 레플리카 수",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -482,7 +482,7 @@ data:
         {
           "id": 14,
           "type": "timeseries",
-          "title": "Photo-service Network RX",
+          "title": "Photo-service 네트워크 수신(RX)",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -516,7 +516,7 @@ data:
         {
           "id": 15,
           "type": "timeseries",
-          "title": "Photo-service Network TX",
+          "title": "Photo-service 네트워크 송신(TX)",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
