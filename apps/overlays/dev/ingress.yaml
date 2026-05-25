@@ -23,9 +23,9 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: gateway
+            name: photo-service   # gateway 경유 제거 → ingress 에서 photo-service 로 직접 라우팅
             port:
-              number: 5000
+              number: 5003
       - path: /api
         pathType: Prefix
         backend:

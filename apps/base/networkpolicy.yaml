@@ -18,6 +18,8 @@ spec:
           port: 80
         - protocol: TCP
           port: 5000
+        - protocol: TCP
+          port: 5003   # /photos 를 ingress 에서 photo-service 로 직접 라우팅 (gateway 경유 제거)
     - from:
         - namespaceSelector:
             matchLabels:
