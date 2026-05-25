@@ -46,14 +46,14 @@ data:
         "to": "now"
       },
       "timezone": "",
-      "title": "Kubernetes Workload Monitoring",
+      "title": "Kubernetes 워크로드 모니터링",
       "uid": "k8s-workload",
       "refresh": "30s",
       "panels": [
         {
           "id": 1,
           "type": "timeseries",
-          "title": "Deployment Desired Replicas",
+          "title": "Deployment 목표 레플리카 수",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -84,7 +84,7 @@ data:
         {
           "id": 2,
           "type": "timeseries",
-          "title": "Deployment Available Replicas",
+          "title": "Deployment 가용 레플리카 수",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -115,7 +115,7 @@ data:
         {
           "id": 3,
           "type": "timeseries",
-          "title": "Pod CPU Usage by Pod",
+          "title": "Pod별 CPU 사용량",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -146,7 +146,7 @@ data:
         {
           "id": 4,
           "type": "timeseries",
-          "title": "Pod Memory Usage by Pod",
+          "title": "Pod별 메모리 사용량",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -179,7 +179,7 @@ data:
         {
           "id": 5,
           "type": "timeseries",
-          "title": "Pod Restarts",
+          "title": "Pod 재시작",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -210,7 +210,7 @@ data:
         {
           "id": 6,
           "type": "timeseries",
-          "title": "HPA Current vs Desired Replicas",
+          "title": "HPA 현재 vs 목표 레플리카",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"

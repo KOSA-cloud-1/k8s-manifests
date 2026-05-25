@@ -84,11 +84,12 @@ kubectl -n monitoring port-forward svc/kube-prometheus-stack-grafana 3000:80
 | Ingress NGINX (요청률/상태코드/지연) | **실제** — ingress-nginx controller metrics |
 | Loki 로그 (app / ingress / argocd) | **실제** — Promtail이 수집한 클러스터 로그 |
 | `profile_image_*` (Request/Success/Failure/Latency/Queue/Active) | **실제** — apps/photo-service `/metrics` |
-| `http_request_duration_seconds` (gateway RPS/지연/상태코드) | **실제** — apps/gateway `/metrics` (prometheus-fastapi-instrumentator) |
+| `http_request_duration_seconds` (gateway/photo-service RPS/지연/상태코드) | **실제** — apps/gateway, apps/photo-service `/metrics` (prometheus-fastapi-instrumentator) |
+| Network throughput / drops | **실제** — node-exporter `node_network_*`, kubelet/cAdvisor `container_network_*` |
 
 ### profile_image_* metric
 
-`photo-service` 앱(`app/photo-service/app.py`)이 `/metrics` endpoint를 직접 제공한다.
+`photo-service` 앱(`app/photo-service/app.py`)이 `/metrics` endpoint를 제공한다.
 Prometheus는 `servicemonitor/photo-service-servicemonitor.yaml`을 통해 `apps` namespace의
 `photo-service` Service `http` port를 scrape한다.
 
@@ -100,6 +101,18 @@ Prometheus는 `servicemonitor/photo-service-servicemonitor.yaml`을 통해 `apps
 - AI 변환은 `asyncio.Semaphore(10)`로 동시 10개로 제한된다.
   `profile_image_active_jobs`=세마포어 점유(처리 중), `profile_image_queue_depth`=획득 대기 수로 동적 노출된다.
 - `profile_image_processing_seconds` 버킷은 AI 지연을 감안해 0.5~120s로 확장했다.
+
+### photo-service HTTP metric (http_request_duration_seconds)
+
+`photo-service`도 `prometheus-fastapi-instrumentator`로 전체 FastAPI 라우트의
+요청수/상태코드/지연시간을 자동 계측한다.
+
+- 대상: `/upload`, `/photos`, `/photos/{object_key}`, `/photos/ai/{object_key}`,
+  `/photo-service/health`, `/photo-service/ready`
+- 주요 metric: `http_request_duration_seconds{handler,method,status}` (histogram)
+  → `_count`(RPS), `_bucket`(P95 latency)
+- AI Profile Service 대시보드가 photo-service API RPS / status / P95와
+  replica 수, pod memory, pod network RX/TX를 같이 보여준다.
 
 
 ### gateway metric (http_request_duration_seconds)

@@ -1,7 +1,8 @@
 # photo-service ServiceMonitor
 #
-# photo-service(FastAPI)가 /metrics 로 profile_image_* metric을 노출하므로
-# Prometheus가 이를 scrape 하도록 한다.
+# photo-service(FastAPI)가 /metrics 로 일반 HTTP API metric
+# (http_request_duration_seconds_*)과 AI 변환 metric(profile_image_*)을 함께
+# 노출하므로 Prometheus가 이를 scrape 하도록 한다.
 #  - selector.matchLabels : apps/photo-service Service 의 metadata.labels 와 일치
 #  - endpoints.port        : 해당 Service 의 ports[].name ("http") 와 일치
 apiVersion: monitoring.coreos.com/v1

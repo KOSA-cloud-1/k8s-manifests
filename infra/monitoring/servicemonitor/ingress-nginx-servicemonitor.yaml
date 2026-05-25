@@ -1,8 +1,7 @@
 # ingress-nginx controller ServiceMonitor
 #
-# 주의: 현재 argocd/applications/06-ingress-nginx.yaml 의 Helm values에는
-#       controller.metrics 설정이 없어 metrics가 비활성화 상태이다.
-#       이 ServiceMonitor가 동작하려면 ingress-nginx Helm values에 아래를 추가해야 한다.
+# 주의: 이 ServiceMonitor가 동작하려면 ingress-nginx Helm values에 아래 설정이
+#       실제 클러스터에 sync되어 controller Service에 "metrics" port가 있어야 한다.
 #
 #         controller:
 #           metrics:

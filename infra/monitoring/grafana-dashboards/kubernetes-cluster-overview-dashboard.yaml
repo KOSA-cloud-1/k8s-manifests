@@ -45,14 +45,14 @@ data:
         "to": "now"
       },
       "timezone": "",
-      "title": "Kubernetes Cluster Overview",
+      "title": "Kubernetes 클러스터 개요",
       "uid": "k8s-cluster-overview",
       "refresh": "30s",
       "panels": [
         {
           "id": 1,
           "type": "stat",
-          "title": "Node Ready Count",
+          "title": "Ready 노드 수",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -82,7 +82,7 @@ data:
         {
           "id": 2,
           "type": "stat",
-          "title": "Node NotReady Count",
+          "title": "NotReady 노드 수",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -112,7 +112,7 @@ data:
         {
           "id": 3,
           "type": "stat",
-          "title": "Total Pods",
+          "title": "전체 Pod 수",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -142,7 +142,7 @@ data:
         {
           "id": 4,
           "type": "stat",
-          "title": "Running Pods",
+          "title": "Running Pod 수",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -172,7 +172,7 @@ data:
         {
           "id": 5,
           "type": "stat",
-          "title": "Pending Pods",
+          "title": "Pending Pod 수",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -202,7 +202,7 @@ data:
         {
           "id": 6,
           "type": "stat",
-          "title": "Failed Pods",
+          "title": "Failed Pod 수",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -232,7 +232,7 @@ data:
         {
           "id": 7,
           "type": "timeseries",
-          "title": "Cluster CPU Usage (cores)",
+          "title": "클러스터 CPU 사용량 (cores)",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -262,7 +262,7 @@ data:
         {
           "id": 8,
           "type": "timeseries",
-          "title": "Cluster Memory Usage",
+          "title": "클러스터 메모리 사용량",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"

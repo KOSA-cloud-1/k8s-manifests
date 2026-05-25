@@ -17,7 +17,7 @@ data:
       "graphTooltip": 0,
       "schemaVersion": 39,
       "tags": ["gateway", "kosa"],
-      "title": "Gateway Monitoring",
+      "title": "게이트웨이 모니터링",
       "uid": "gateway-monitoring",
       "templating": {
         "list": [
@@ -28,7 +28,7 @@ data:
       "panels": [
         {
           "id": 1,
-          "title": "Total Request Rate (RPS)",
+          "title": "전체 요청률 (RPS)",
           "type": "stat",
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "gridPos": { "h": 4, "w": 12, "x": 0, "y": 0 },
@@ -40,7 +40,7 @@ data:
         },
         {
           "id": 2,
-          "title": "5xx Error Rate (RPS)",
+          "title": "5xx 오류율 (RPS)",
           "type": "stat",
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "gridPos": { "h": 4, "w": 12, "x": 12, "y": 0 },
@@ -52,7 +52,7 @@ data:
         },
         {
           "id": 3,
-          "title": "Request Rate by handler",
+          "title": "Handler별 요청률",
           "type": "timeseries",
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
@@ -65,7 +65,7 @@ data:
         },
         {
           "id": 4,
-          "title": "P95 Latency by handler",
+          "title": "Handler별 P95 지연",
           "type": "timeseries",
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
@@ -78,7 +78,7 @@ data:
         },
         {
           "id": 5,
-          "title": "Request Rate by status",
+          "title": "상태코드별 요청률",
           "type": "timeseries",
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
@@ -91,7 +91,7 @@ data:
         },
         {
           "id": 6,
-          "title": "Gateway Pod CPU (HPA 기준)",
+          "title": "게이트웨이 Pod CPU (HPA 기준)",
           "type": "timeseries",
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },

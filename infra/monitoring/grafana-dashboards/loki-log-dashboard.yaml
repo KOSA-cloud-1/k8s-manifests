@@ -45,14 +45,14 @@ data:
         "to": "now"
       },
       "timezone": "",
-      "title": "Loki Log Monitoring",
+      "title": "Loki 로그 모니터링",
       "uid": "loki-logs",
       "refresh": "30s",
       "panels": [
         {
           "id": 1,
           "type": "logs",
-          "title": "photo-service ERROR logs",
+          "title": "photo-service ERROR 로그",
           "datasource": {
             "type": "loki",
             "uid": "${loki}"
@@ -84,7 +84,7 @@ data:
         {
           "id": 2,
           "type": "logs",
-          "title": "image conversion failure",
+          "title": "이미지 변환 실패 로그",
           "datasource": {
             "type": "loki",
             "uid": "${loki}"
@@ -116,7 +116,7 @@ data:
         {
           "id": 3,
           "type": "logs",
-          "title": "ingress 5xx logs",
+          "title": "ingress 5xx 로그",
           "datasource": {
             "type": "loki",
             "uid": "${loki}"
@@ -148,7 +148,7 @@ data:
         {
           "id": 4,
           "type": "logs",
-          "title": "argocd failed logs",
+          "title": "argocd 실패 로그",
           "datasource": {
             "type": "loki",
             "uid": "${loki}"

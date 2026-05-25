@@ -19,4 +19,5 @@ resources:
   - grafana-dashboards/ingress-nginx-dashboard.yaml
   - grafana-dashboards/loki-log-dashboard.yaml
   - grafana-dashboards/memory-dashboard.yaml
+  - grafana-dashboards/network-dashboard.yaml
   - grafana-dashboards/gateway-dashboard.yaml
