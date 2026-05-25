@@ -102,16 +102,17 @@ Prometheus는 `servicemonitor/photo-service-servicemonitor.yaml`을 통해 `apps
   `profile_image_active_jobs`=세마포어 점유(처리 중), `profile_image_queue_depth`=획득 대기 수로 동적 노출된다.
 - `profile_image_processing_seconds` 버킷은 AI 지연을 감안해 0.5~120s로 확장했다.
 
-### photo-service HTTP metric (http_request_duration_seconds)
+### photo-service metric (profile_image_*)
 
-`photo-service`도 `prometheus-fastapi-instrumentator`로 전체 FastAPI 라우트의
-요청수/상태코드/지연시간을 자동 계측한다.
+`photo-service`는 이미지 변환 업무 지표를 직접 `/metrics`로 노출한다.
 
 - 대상: `/upload`, `/photos`, `/photos/{object_key}`, `/photos/ai/{object_key}`,
   `/photo-service/health`, `/photo-service/ready`
-- 주요 metric: `http_request_duration_seconds{handler,method,status}` (histogram)
-  → `_count`(RPS), `_bucket`(P95 latency)
-- AI Profile Service 대시보드가 photo-service API RPS / status / P95와
+- 주요 metric:
+  - `profile_image_requests_total`, `profile_image_success_total`, `profile_image_failed_total`
+  - `profile_image_processing_seconds_bucket` (이미지 변환 P95 latency)
+  - `profile_image_active_jobs`, `profile_image_queue_depth`
+- AI Profile Service 대시보드가 photo-service 요청률 / 성공·실패율 / 변환 P95와
   replica 수, pod memory, pod network RX/TX를 같이 보여준다.
 
 
@@ -123,8 +124,9 @@ Prometheus는 `servicemonitor/photo-service-servicemonitor.yaml`을 통해 `apps
 namespace의 `gateway` Service `http` port를 scrape한다.
 
 - 주요 metric: `http_request_duration_seconds{handler,method,status}` (histogram)
-  → `_count`(RPS), `_bucket`(P95 latency). status는 instrumentator 기본값상 `2xx`/`5xx`로 그룹화된다.
-- Gateway Monitoring 대시보드가 RPS / handler별 P95 / status 분포 / 5xx rate / Pod CPU를 보여준다.
+  → `_count`(RPS), `_bucket`(P95 latency). `handler`는 함수명이 아니라 FastAPI route pattern이며
+  status는 instrumentator 기본값상 `2xx`/`5xx`로 그룹화된다.
+- Gateway Monitoring 대시보드가 RPS / API 경로별 P95 / status 분포 / 5xx rate / Pod CPU를 보여준다.
 
 ## HPA / Autoscaling
 
@@ -152,6 +154,8 @@ namespace의 `gateway` Service `http` port를 scrape한다.
 
 ```yaml
 controller:
+  extraArgs:
+    metrics-per-host: "false"
   metrics:
     enabled: true
     serviceMonitor:
@@ -160,6 +164,9 @@ controller:
 
 - 활성화하면 controller Service에 name `metrics`(10254) port가 생기고
   `nginx_ingress_controller_*` metric이 노출되어 이 ServiceMonitor가 바로 scrape한다.
+- `infra/ingress.yaml`의 prod ingress는 host 없는 catch-all 이므로 기본 host 기준 request
+  metric이 생성되지 않을 수 있다. `metrics-per-host=false`를 둬서
+  `nginx_ingress_controller_requests`를 ingress/service/path/status 기준으로 남긴다.
 - 단, **ArgoCD가 `ingress-nginx` Application을 sync해 controller를 재배포**해야 실제로 port가
   생긴다. sync 전에는 Ingress NGINX Dashboard가 빈 상태일 수 있다.
 

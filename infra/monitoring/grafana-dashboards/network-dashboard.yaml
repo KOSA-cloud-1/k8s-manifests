@@ -77,8 +77,8 @@ data:
                 "type": "prometheus",
                 "uid": "${datasource}"
               },
-              "expr": "sum by (instance, device) (rate(node_network_receive_bytes_total{device!~\"lo|veth.*|cali.*|flannel.*|docker.*|br-.*|vxlan.*|tunl.*\"}[5m])) * 8",
-              "legendFormat": "{{instance}} {{device}} rx"
+              "expr": "sum by (node, device) (label_replace(rate(node_network_receive_bytes_total{device!~\"lo|veth.*|cali.*|flannel.*|docker.*|br-.*|vxlan.*|tunl.*\"}[5m]), \"internal_ip\", \"$1\", \"instance\", \"([^:]+):.*\") * on (internal_ip) group_left(node) kube_node_info) * 8",
+              "legendFormat": "{{node}} {{device}} rx"
             }
           ]
         },
@@ -111,8 +111,8 @@ data:
                 "type": "prometheus",
                 "uid": "${datasource}"
               },
-              "expr": "sum by (instance, device) (rate(node_network_transmit_bytes_total{device!~\"lo|veth.*|cali.*|flannel.*|docker.*|br-.*|vxlan.*|tunl.*\"}[5m])) * 8",
-              "legendFormat": "{{instance}} {{device}} tx"
+              "expr": "sum by (node, device) (label_replace(rate(node_network_transmit_bytes_total{device!~\"lo|veth.*|cali.*|flannel.*|docker.*|br-.*|vxlan.*|tunl.*\"}[5m]), \"internal_ip\", \"$1\", \"instance\", \"([^:]+):.*\") * on (internal_ip) group_left(node) kube_node_info) * 8",
+              "legendFormat": "{{node}} {{device}} tx"
             }
           ]
         },
@@ -213,8 +213,8 @@ data:
                 "type": "prometheus",
                 "uid": "${datasource}"
               },
-              "expr": "sum by (instance, device) (rate(node_network_receive_drop_total{device!~\"lo|veth.*|cali.*|flannel.*|docker.*|br-.*|vxlan.*|tunl.*\"}[5m]) + rate(node_network_transmit_drop_total{device!~\"lo|veth.*|cali.*|flannel.*|docker.*|br-.*|vxlan.*|tunl.*\"}[5m]))",
-              "legendFormat": "{{instance}} {{device}} drops"
+              "expr": "sum by (node, device) (label_replace(rate(node_network_receive_drop_total{device!~\"lo|veth.*|cali.*|flannel.*|docker.*|br-.*|vxlan.*|tunl.*\"}[5m]) + rate(node_network_transmit_drop_total{device!~\"lo|veth.*|cali.*|flannel.*|docker.*|br-.*|vxlan.*|tunl.*\"}[5m]), \"internal_ip\", \"$1\", \"instance\", \"([^:]+):.*\") * on (internal_ip) group_left(node) kube_node_info)",
+              "legendFormat": "{{node}} {{device}} drops"
             }
           ]
         },

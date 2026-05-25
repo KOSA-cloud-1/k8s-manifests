@@ -116,7 +116,7 @@ data:
         {
           "id": 3,
           "type": "logs",
-          "title": "ingress 5xx 로그",
+          "title": "ingress 전체 로그",
           "datasource": {
             "type": "loki",
             "uid": "${loki}"
@@ -140,13 +140,45 @@ data:
                 "type": "loki",
                 "uid": "${loki}"
               },
-              "expr": "{namespace=\"ingress-nginx\"} |= \" 500 \"",
+              "expr": "{namespace=\"ingress-nginx\"}",
               "queryType": "range"
             }
           ]
         },
         {
           "id": 4,
+          "type": "logs",
+          "title": "ingress 4xx/5xx 로그",
+          "datasource": {
+            "type": "loki",
+            "uid": "${loki}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 24
+          },
+          "options": {
+            "showTime": true,
+            "wrapLogMessage": true,
+            "sortOrder": "Descending",
+            "enableLogDetails": true
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "loki",
+                "uid": "${loki}"
+              },
+              "expr": "{namespace=\"ingress-nginx\"} |~ \" (4|5)[0-9]{2} \"",
+              "queryType": "range"
+            }
+          ]
+        },
+        {
+          "id": 5,
           "type": "logs",
           "title": "argocd 실패 로그",
           "datasource": {
@@ -157,7 +189,7 @@ data:
             "h": 8,
             "w": 24,
             "x": 0,
-            "y": 24
+            "y": 32
           },
           "options": {
             "showTime": true,

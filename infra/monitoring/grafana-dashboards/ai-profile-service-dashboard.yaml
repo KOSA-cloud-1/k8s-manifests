@@ -328,7 +328,7 @@ data:
         {
           "id": 10,
           "type": "timeseries",
-          "title": "Photo API Handler별 요청률",
+          "title": "이미지 변환 요청률",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -354,15 +354,15 @@ data:
                 "type": "prometheus",
                 "uid": "${datasource}"
               },
-              "expr": "sum by (handler) (rate(http_request_duration_seconds_count{namespace=\"apps\", service=\"photo-service\"}[5m]))",
-              "legendFormat": "{{handler}}"
+              "expr": "sum(rate(profile_image_requests_total{namespace=\"apps\", service=\"photo-service\"}[5m]))",
+              "legendFormat": "requests"
             }
           ]
         },
         {
           "id": 11,
           "type": "timeseries",
-          "title": "Photo API 상태코드별 요청률",
+          "title": "이미지 변환 결과별 요청률",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -388,15 +388,24 @@ data:
                 "type": "prometheus",
                 "uid": "${datasource}"
               },
-              "expr": "sum by (status) (rate(http_request_duration_seconds_count{namespace=\"apps\", service=\"photo-service\"}[5m]))",
-              "legendFormat": "{{status}}"
+              "expr": "sum(rate(profile_image_success_total{namespace=\"apps\", service=\"photo-service\"}[5m]))",
+              "legendFormat": "success"
+            },
+            {
+              "refId": "B",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "sum(rate(profile_image_failed_total{namespace=\"apps\", service=\"photo-service\"}[5m]))",
+              "legendFormat": "failed"
             }
           ]
         },
         {
           "id": 12,
           "type": "timeseries",
-          "title": "Photo API Handler별 P95 지연",
+          "title": "이미지 변환 P95 지연",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -422,8 +431,8 @@ data:
                 "type": "prometheus",
                 "uid": "${datasource}"
               },
-              "expr": "histogram_quantile(0.95, sum by (le, handler) (rate(http_request_duration_seconds_bucket{namespace=\"apps\", service=\"photo-service\"}[5m])))",
-              "legendFormat": "{{handler}}"
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(profile_image_processing_seconds_bucket{namespace=\"apps\", service=\"photo-service\"}[5m])))",
+              "legendFormat": "processing"
             }
           ]
         },

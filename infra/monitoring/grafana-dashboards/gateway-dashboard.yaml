@@ -52,7 +52,7 @@ data:
         },
         {
           "id": 3,
-          "title": "Handler별 요청률",
+          "title": "API 경로별 요청률",
           "type": "timeseries",
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
@@ -65,7 +65,7 @@ data:
         },
         {
           "id": 4,
-          "title": "Handler별 P95 지연",
+          "title": "API 경로별 P95 지연",
           "type": "timeseries",
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
@@ -78,15 +78,21 @@ data:
         },
         {
           "id": 5,
-          "title": "상태코드별 요청률",
+          "title": "게이트웨이 파드 개수",
           "type": "timeseries",
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
-          "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
+          "fieldConfig": { "defaults": { "unit": "short", "min": 0 }, "overrides": [] },
           "targets": [
             { "refId": "A", "datasource": { "type": "prometheus", "uid": "${datasource}" },
-              "expr": "sum by (status) (rate(http_request_duration_seconds_count{service=\"gateway\"}[5m]))",
-              "legendFormat": "{{status}}" }
+              "expr": "kube_deployment_spec_replicas{namespace=\"apps\", deployment=\"gateway\"}",
+              "legendFormat": "spec" },
+            { "refId": "B", "datasource": { "type": "prometheus", "uid": "${datasource}" },
+              "expr": "kube_deployment_status_replicas_available{namespace=\"apps\", deployment=\"gateway\"}",
+              "legendFormat": "available" },
+            { "refId": "C", "datasource": { "type": "prometheus", "uid": "${datasource}" },
+              "expr": "kube_horizontalpodautoscaler_status_desired_replicas{namespace=\"apps\", horizontalpodautoscaler=\"gateway\"}",
+              "legendFormat": "hpa desired" }
           ]
         },
         {
