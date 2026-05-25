@@ -13,12 +13,19 @@ spec:
     targetRevision: 4.15.1
     helm:
       releaseName: ingress-nginx
+      parameters:
+        - name: controller.extraArgs.metrics-per-host
+          value: "false"
       values: |
         controller:
           # 단일 replica는 SPOF였다: ingress pod가 죽으면 MetalLB가 VIP(172.17.128.240)
           # announce를 멈추고, 앞단 HAProxy backend(check)가 DOWN → 502 Bad Gateway.
           # 최소 2 replica + 노드 분산 + PDB 로 HA 구성한다.
           replicaCount: 2
+          extraArgs:
+            # prod ingress는 host 없는 catch-all 이므로 기본 host 기준 request metric이
+            # 생성되지 않을 수 있다. ingress/service/path/status 기준 metric을 남긴다.
+            metrics-per-host: "false"
           # 두 replica가 서로 다른 노드에 뜨도록 분산 (한 노드 장애로 둘 다 죽는 것 방지)
           topologySpreadConstraints:
             - maxSkew: 1

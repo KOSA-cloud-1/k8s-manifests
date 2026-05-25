@@ -72,8 +72,8 @@ data:
             {
               "refId": "A",
               "datasource": { "type": "prometheus", "uid": "${datasource}" },
-              "expr": "(node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100",
-              "legendFormat": "{{instance}}"
+              "expr": "(label_replace(node_memory_MemAvailable_bytes, \"internal_ip\", \"$1\", \"instance\", \"([^:]+):.*\") / label_replace(node_memory_MemTotal_bytes, \"internal_ip\", \"$1\", \"instance\", \"([^:]+):.*\")) * on (internal_ip) group_left(node) kube_node_info * 100",
+              "legendFormat": "{{node}}"
             }
           ]
         },

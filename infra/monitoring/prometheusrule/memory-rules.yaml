@@ -67,10 +67,16 @@ spec:
 
         - alert: NodeMemoryAvailableLow
           expr: |
-            (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 < 10
+            (
+              label_replace(node_memory_MemAvailable_bytes, "internal_ip", "$1", "instance", "([^:]+):.*")
+              /
+              label_replace(node_memory_MemTotal_bytes, "internal_ip", "$1", "instance", "([^:]+):.*")
+            )
+            * on (internal_ip) group_left(node) kube_node_info
+            * 100 < 10
           for: 5m
           labels:
             severity: warning
           annotations:
             summary: "Node available memory low"
-            description: "노드 {{ $labels.instance }} 가용 메모리가 10% 미만으로 5분 이상 지속."
+            description: "노드 {{ $labels.node }} 가용 메모리가 10% 미만으로 5분 이상 지속."
