@@ -123,9 +123,10 @@ mysql.data.svc.cluster.local
 
 - `kube-prometheus-stack`(Prometheus/Grafana/Alertmanager/node-exporter/kube-state-metrics) +
   `loki`/`promtail`(로그) + `metrics-server`(HPA용 resource metrics)
-- Grafana(LoadBalancer `172.17.128.242`)에 7개 대시보드 자동 로드:
-  AI Profile / Cluster Overview / Workload / Ingress NGINX / Loki / Memory / Gateway
-- 앱 메트릭: photo-service `profile_image_*`, gateway `http_request_duration_seconds`
+- Grafana(LoadBalancer `172.17.128.242`)에 8개 대시보드 자동 로드:
+  AI Profile / Cluster Overview / Workload / Ingress NGINX / Loki / Memory / Network / Gateway
+- 앱 메트릭: photo-service `profile_image_*` + `http_request_duration_seconds`,
+  gateway `http_request_duration_seconds`
 - HPA: photo-service(memory 60% + cpu 60% 보조, min2/max4), gateway(cpu 70%, min2/max4)
 
 장기 보관(30일+ 감사/추세/장애 회고)이 필요해지면 Thanos 또는 remote_write 도입을 검토합니다.

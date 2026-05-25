@@ -1,16 +1,15 @@
-# Ingress NGINX Monitoring dashboard
-# Grafana sidecar(label grafana_dashboard: "1")가 자동 로드한다.
-# kube-prometheus-stack values: sidecar.dashboards.searchNamespace=ALL.
+# Kubernetes Network Monitoring dashboard
+# Uses node-exporter for node NIC throughput and kubelet/cAdvisor for pod traffic.
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: grafana-dashboard-ingress-nginx
+  name: grafana-dashboard-network
   namespace: monitoring
   labels:
     grafana_dashboard: "1"
     app.kubernetes.io/part-of: monitoring-observability
 data:
-  ingress-nginx.json: |
+  network.json: |
     {
       "annotations": {
         "list": []
@@ -19,7 +18,8 @@ data:
       "graphTooltip": 0,
       "schemaVersion": 39,
       "tags": [
-        "ingress-nginx",
+        "kubernetes",
+        "network",
         "kosa"
       ],
       "templating": {
@@ -44,14 +44,14 @@ data:
         "to": "now"
       },
       "timezone": "",
-      "title": "Ingress NGINX Monitoring",
-      "uid": "ingress-nginx",
+      "title": "Kubernetes Network Monitoring",
+      "uid": "k8s-network-monitoring",
       "refresh": "30s",
       "panels": [
         {
           "id": 1,
           "type": "timeseries",
-          "title": "Ingress Request Rate",
+          "title": "Node Receive Throughput",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -63,7 +63,10 @@ data:
             "y": 0
           },
           "fieldConfig": {
-            "defaults": {},
+            "defaults": {
+              "unit": "bps",
+              "min": 0
+            },
             "overrides": []
           },
           "options": {},
@@ -74,15 +77,15 @@ data:
                 "type": "prometheus",
                 "uid": "${datasource}"
               },
-              "expr": "sum by (namespace, ingress, service, path) (rate(nginx_ingress_controller_requests{controller_namespace=\"ingress-nginx\"}[5m]))",
-              "legendFormat": "{{namespace}}/{{ingress}} {{path}} -> {{service}}"
+              "expr": "sum by (instance, device) (rate(node_network_receive_bytes_total{device!~\"lo|veth.*|cali.*|flannel.*|docker.*|br-.*|vxlan.*|tunl.*\"}[5m])) * 8",
+              "legendFormat": "{{instance}} {{device}} rx"
             }
           ]
         },
         {
           "id": 2,
           "type": "timeseries",
-          "title": "HTTP Status Code Rate",
+          "title": "Node Transmit Throughput",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -94,7 +97,10 @@ data:
             "y": 0
           },
           "fieldConfig": {
-            "defaults": {},
+            "defaults": {
+              "unit": "bps",
+              "min": 0
+            },
             "overrides": []
           },
           "options": {},
@@ -105,15 +111,15 @@ data:
                 "type": "prometheus",
                 "uid": "${datasource}"
               },
-              "expr": "sum by (status) (rate(nginx_ingress_controller_requests{controller_namespace=\"ingress-nginx\"}[5m]))",
-              "legendFormat": "{{status}}"
+              "expr": "sum by (instance, device) (rate(node_network_transmit_bytes_total{device!~\"lo|veth.*|cali.*|flannel.*|docker.*|br-.*|vxlan.*|tunl.*\"}[5m])) * 8",
+              "legendFormat": "{{instance}} {{device}} tx"
             }
           ]
         },
         {
           "id": 3,
           "type": "timeseries",
-          "title": "5xx Error Rate",
+          "title": "Pod Receive Throughput",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -125,7 +131,10 @@ data:
             "y": 8
           },
           "fieldConfig": {
-            "defaults": {},
+            "defaults": {
+              "unit": "bps",
+              "min": 0
+            },
             "overrides": []
           },
           "options": {},
@@ -136,15 +145,15 @@ data:
                 "type": "prometheus",
                 "uid": "${datasource}"
               },
-              "expr": "sum by (namespace, ingress, service, path, status) (rate(nginx_ingress_controller_requests{controller_namespace=\"ingress-nginx\",status=~\"5..\"}[5m]))",
-              "legendFormat": "{{namespace}}/{{ingress}} {{path}} -> {{service}} {{status}}"
+              "expr": "sum by (namespace, pod) (rate(container_network_receive_bytes_total{namespace=~\"apps|apps-dev|ingress-nginx\", pod!=\"\"}[5m])) * 8",
+              "legendFormat": "{{namespace}}/{{pod}} rx"
             }
           ]
         },
         {
           "id": 4,
           "type": "timeseries",
-          "title": "P95 Request Duration (s)",
+          "title": "Pod Transmit Throughput",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -157,7 +166,8 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "unit": "s"
+              "unit": "bps",
+              "min": 0
             },
             "overrides": []
           },
@@ -169,15 +179,15 @@ data:
                 "type": "prometheus",
                 "uid": "${datasource}"
               },
-              "expr": "histogram_quantile(0.95, sum by (le, namespace, ingress, service, path) (rate(nginx_ingress_controller_request_duration_seconds_bucket{controller_namespace=\"ingress-nginx\"}[5m])))",
-              "legendFormat": "{{namespace}}/{{ingress}} {{path}} -> {{service}}"
+              "expr": "sum by (namespace, pod) (rate(container_network_transmit_bytes_total{namespace=~\"apps|apps-dev|ingress-nginx\", pod!=\"\"}[5m])) * 8",
+              "legendFormat": "{{namespace}}/{{pod}} tx"
             }
           ]
         },
         {
           "id": 5,
           "type": "timeseries",
-          "title": "4xx Error Rate",
+          "title": "Node Packet Drops",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -189,7 +199,10 @@ data:
             "y": 16
           },
           "fieldConfig": {
-            "defaults": {},
+            "defaults": {
+              "unit": "pps",
+              "min": 0
+            },
             "overrides": []
           },
           "options": {},
@@ -200,15 +213,15 @@ data:
                 "type": "prometheus",
                 "uid": "${datasource}"
               },
-              "expr": "sum by (namespace, ingress, service, path, status) (rate(nginx_ingress_controller_requests{controller_namespace=\"ingress-nginx\",status=~\"4..\"}[5m]))",
-              "legendFormat": "{{namespace}}/{{ingress}} {{path}} -> {{service}} {{status}}"
+              "expr": "sum by (instance, device) (rate(node_network_receive_drop_total{device!~\"lo|veth.*|cali.*|flannel.*|docker.*|br-.*|vxlan.*|tunl.*\"}[5m]) + rate(node_network_transmit_drop_total{device!~\"lo|veth.*|cali.*|flannel.*|docker.*|br-.*|vxlan.*|tunl.*\"}[5m]))",
+              "legendFormat": "{{instance}} {{device}} drops"
             }
           ]
         },
         {
           "id": 6,
           "type": "timeseries",
-          "title": "Gateway-Class Edge Errors",
+          "title": "Pod Packet Drops",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -220,7 +233,10 @@ data:
             "y": 16
           },
           "fieldConfig": {
-            "defaults": {},
+            "defaults": {
+              "unit": "pps",
+              "min": 0
+            },
             "overrides": []
           },
           "options": {},
@@ -231,8 +247,8 @@ data:
                 "type": "prometheus",
                 "uid": "${datasource}"
               },
-              "expr": "sum by (namespace, ingress, service, path, status) (rate(nginx_ingress_controller_requests{controller_namespace=\"ingress-nginx\",status=~\"502|503|504\"}[5m]))",
-              "legendFormat": "{{namespace}}/{{ingress}} {{path}} -> {{service}} {{status}}"
+              "expr": "sum by (namespace, pod) (rate(container_network_receive_packets_dropped_total{namespace=~\"apps|apps-dev|ingress-nginx\", pod!=\"\"}[5m]) + rate(container_network_transmit_packets_dropped_total{namespace=~\"apps|apps-dev|ingress-nginx\", pod!=\"\"}[5m]))",
+              "legendFormat": "{{namespace}}/{{pod}} drops"
             }
           ]
         }
