@@ -76,7 +76,7 @@ data:
                 "type": "loki",
                 "uid": "${loki}"
               },
-              "expr": "{namespace=\"apps\", app=\"photo-service\"} |= \"429\"",
+              "expr": "{namespace=\"apps\", app=\"photo-service\"} |~ \"\\\" 429 \"",
               "queryType": "range"
             }
           ]
@@ -108,7 +108,7 @@ data:
                 "type": "loki",
                 "uid": "${loki}"
               },
-              "expr": "{namespace=\"apps\", app=\"photo-service\"} |= \"500\"",
+              "expr": "{namespace=\"apps\", app=\"photo-service\"} |~ \"\\\" 500 \"",
               "queryType": "range"
             }
           ]
