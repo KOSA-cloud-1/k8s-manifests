@@ -52,7 +52,7 @@ data:
         {
           "id": 1,
           "type": "logs",
-          "title": "photo-service ERROR 로그",
+          "title": "photo-service 429 로그",
           "datasource": {
             "type": "loki",
             "uid": "${loki}"
@@ -76,7 +76,7 @@ data:
                 "type": "loki",
                 "uid": "${loki}"
               },
-              "expr": "{namespace=\"apps\", app=\"photo-service\"} |= \"ERROR\"",
+              "expr": "{namespace=\"apps\", app=\"photo-service\"} |= \"429\"",
               "queryType": "range"
             }
           ]
@@ -84,7 +84,7 @@ data:
         {
           "id": 2,
           "type": "logs",
-          "title": "이미지 변환 실패 로그",
+          "title": "photo-service 500 로그",
           "datasource": {
             "type": "loki",
             "uid": "${loki}"
@@ -108,7 +108,7 @@ data:
                 "type": "loki",
                 "uid": "${loki}"
               },
-              "expr": "{namespace=\"apps\", app=\"photo-service\"} |= \"convert failed\"",
+              "expr": "{namespace=\"apps\", app=\"photo-service\"} |= \"500\"",
               "queryType": "range"
             }
           ]
