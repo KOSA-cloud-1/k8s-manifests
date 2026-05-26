@@ -5,7 +5,7 @@ metadata:
   namespace: data
 spec:
   serviceName: galera          # 헤드리스 서비스 이름 (파드 DNS에 사용됨)
-  replicas: 3                  # Galera 최소 권장: 3대 (홀수여야 투표 가능)
+  replicas: 0                  # Galera 최소 권장: 3대 (홀수여야 투표 가능)
   selector:
     matchLabels:
       app: galera
