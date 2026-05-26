@@ -13,19 +13,19 @@ resources:
 images:
   - name: auth-server
     newName: kosa1team/auth-server
-    newTag: 0d33fc0939baedc71d2d6d2ff5a66ce558148b90
+    newTag: c2973eaa0fc5801c90965a178d4225b582e739f8
   - name: employee-server
     newName: kosa1team/employee-server
-    newTag: 0d33fc0939baedc71d2d6d2ff5a66ce558148b90
+    newTag: c2973eaa0fc5801c90965a178d4225b582e739f8
   - name: gateway
     newName: kosa1team/gateway
-    newTag: 0d33fc0939baedc71d2d6d2ff5a66ce558148b90
+    newTag: c2973eaa0fc5801c90965a178d4225b582e739f8
   - name: photo-service
     newName: kosa1team/photo-service
-    newTag: 0d33fc0939baedc71d2d6d2ff5a66ce558148b90
+    newTag: c2973eaa0fc5801c90965a178d4225b582e739f8
   - name: frontend
     newName: kosa1team/frontend
-    newTag: 0d33fc0939baedc71d2d6d2ff5a66ce558148b90
+    newTag: c2973eaa0fc5801c90965a178d4225b582e739f8
 patches:
   # dev 는 평소 0 replica (on-demand): 리소스를 거의 점유하지 않는다.
   # 테스트/시연 직전에만 수동으로 올린다:
