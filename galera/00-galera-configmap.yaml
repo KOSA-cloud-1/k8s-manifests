@@ -35,6 +35,14 @@ data:
       last_access_time DATETIME DEFAULT NOW() COMMENT '마지막 조회 시각'
     );
 
+    -- Grafana 전용 DB. 최초 부트스트랩 시 자동 생성.
+    -- 유저/패스워드는 init.sql에서 처리 불가(env 치환 미지원)이므로
+    -- 기존 클러스터에서 아래 명령을 한 번 수동 실행한다:
+    --   kubectl -n data exec -it galera-0 -- mysql -u root -p
+    --   CREATE USER IF NOT EXISTS 'grafana'@'%' IDENTIFIED BY '<password>';
+    --   GRANT ALL PRIVILEGES ON grafana.* TO 'grafana'@'%';
+    CREATE DATABASE IF NOT EXISTS grafana CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
   start.sh: |
     #!/bin/bash
     set -e

@@ -21,13 +21,20 @@ grafana:
     passwordKey: admin-password
   defaultDashboardsEnabled: true
 
-  # Grafana DB는 worker7의 RWO local PV에 저장된다. 기본 RollingUpdate에서는 롤아웃 중
-  # grafana 파드 2개가 잠시 공존하며 같은 SQLite 파일을 동시에 열어 DB 락 경합이 발생한다
-  # (crashloop, exitCode 2). 특히 DB가 비어 있을 때 첫 부팅 마이그레이션이 local-disk fsync
-  # 때문에 느려 더 잘 터진다. Recreate는 항상 grafana 파드를 1개만 띄워 마이그레이션이
-  # 깨끗하게 끝나도록 보장한다.
-  deploymentStrategy:
-    type: Recreate
+  # Grafana DB를 Galera(mysql.data.svc.cluster.local)로 사용한다.
+  # SQLite RWO PV 공유로 인한 DB 락(Recreate 전략 필요, 롤아웃 중 다운타임) 문제 해소.
+  # 자격증명은 grafana-db-secret(ESO → prod/monitoring/grafana-db)에서 주입.
+  # 사전 조건: Galera에 `grafana` DB와 유저 생성 필요 (아래 SQL 참고).
+  #   CREATE DATABASE grafana CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+  #   CREATE USER 'grafana'@'%' IDENTIFIED BY '<password>';
+  #   GRANT ALL PRIVILEGES ON grafana.* TO 'grafana'@'%';
+  env:
+    GF_DATABASE_TYPE: mysql
+    GF_DATABASE_HOST: mysql.data.svc.cluster.local:3306
+    GF_DATABASE_NAME: grafana
+  extraEnvFrom:
+    - secretRef:
+        name: grafana-db-secret
 
   initChownData:
     enabled: false
