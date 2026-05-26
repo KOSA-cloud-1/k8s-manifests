@@ -32,6 +32,11 @@ spec:
       name: gateway
       jqPathExpressions:
         - .spec.replicas
+    - group: apps
+      kind: Deployment
+      name: employee-server
+      jqPathExpressions:
+        - .spec.replicas
   syncPolicy:
     automated:
       prune: true

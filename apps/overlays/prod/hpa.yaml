@@ -31,6 +31,27 @@ spec:
           type: Utilization
           averageUtilization: 60
 ---
+# employee-server 오토스케일링.
+# DB 조회·이미지 업로드 등 CPU 바운드 작업. requests=500m 대비 70% 초과 시 확장.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: employee-server
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: employee-server
+  minReplicas: 2
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+---
 # gateway 오토스케일링 (서비스 입구 프록시).
 # CPU 사용률(파드 requests=500m 대비)이 평균 70%를 넘으면 확장.
 apiVersion: autoscaling/v2

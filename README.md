@@ -33,8 +33,8 @@
 
 ## Namespace
 
-- `apps`: gateway, auth-server, employee-server, photo-service, frontend, Ingress (PROD overlay)
-- `apps-dev`: 동일 워크로드의 dev overlay (on-demand, 평소 0 replica)
+- `apps`: gateway, auth-server, employee-server, photo-service, frontend, Ingress(prod catch-all) — `apps/overlays/prod`
+- `apps-dev`: 동일 워크로드의 dev overlay (on-demand, 평소 0 replica) — `apps/overlays/dev`
 - `data`: Galera StatefulSet, DB Service
 - `backup`: photo backup CronJob
 - `monitoring`: kube-prometheus-stack, Grafana, Alertmanager, local PV
@@ -144,6 +144,10 @@ Grafana PVC/Alertmanager 설정은 정기 백업, Prometheus TSDB는 장기 보�
 MetalLB chart와 `infra/metallb-config.yaml`이 정상 동기화된 뒤, 위 파일들의 `type`을
 `LoadBalancer`로 바꾸고 주석 처리된 `metallb.io/loadBalancerIPs` annotation을 되살리면 됩니다.
 
+**Ingress 소유권**: prod Ingress(`apps/overlays/prod/ingress.yaml`)는 `kosa-apps`(wave 10)가 소유합니다.
+dev Ingress(`apps/overlays/dev/ingress.yaml`, `host: dev.kosa.local`)는 `kosa-apps-dev`(wave 10)가 소유합니다.
+두 overlay 가 각자 Ingress 를 소유하는 대칭 구조로, `infra/`에서 분리되어 있습니다.
+
 외부 흐름:
 
 ```text
@@ -200,9 +204,9 @@ child Application 인벤토리 (sync-wave 오름차순 = 배포 순서):
 | -8 | ceph-csi-rbd | chart ceph-csi-rbd 3.16.2 | ceph-csi-rbd |
 | -5 | kosa-storage | `storage/ceph-csi-rbd/` | ceph-csi-rbd |
 | 0 | kosa-data | `galera/` | data |
-| 10 | kosa-apps | `apps/overlays/prod` | apps |
-| 10 | kosa-apps-dev | `apps/overlays/dev` | apps-dev |
-| 20 | kosa-infra | `infra/` | apps |
+| 10 | kosa-apps | `apps/overlays/prod` (Ingress/HPA/PDB 포함) | apps |
+| 10 | kosa-apps-dev | `apps/overlays/dev` (Ingress/ExternalSecret 포함) | apps-dev |
+| 20 | kosa-infra | `infra/` (argocd-server-service 등 인프라 전용) | apps |
 | 30 | kosa-backup | `backup/` | backup |
 | 40 | kosa-monitoring-local-storage | `monitoring/local-storage.yaml` | monitoring |
 | 45 | kosa-monitoring-config | `monitoring/loki-grafana-datasource.yaml` | monitoring |

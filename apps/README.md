@@ -17,7 +17,8 @@ apps/
 │   └── kustomization.yaml    # namespace·이미지태그·HPA·PDB·Ingress 미포함 (overlay가 결정)
 └── overlays/
     ├── prod/                 # → namespace: apps      (운영)
-    │   ├── kustomization.yaml # base + HPA/PDB, images(main 태그)
+    │   ├── kustomization.yaml # base + Ingress/HPA/PDB, images(main 태그)
+    │   ├── ingress.yaml      # host 없는 catch-all (prod 전용)
     │   ├── hpa.yaml
     │   └── pdb.yaml
     └── dev/                  # → namespace: apps-dev  (개발)
@@ -38,7 +39,7 @@ apps/
 | replica / 리소스 | **평소 0 (on-demand)**, 켤 땐 1 replica, photo 축소(2Gi/500m, affinity 해제) | 2~4 (HPA), photo-service 4Gi/2CPU |
 | HPA / PDB | 없음 | 있음 |
 | 노드 배치 | photo affinity 해제 → 여유 노드(worker3~6) | photo는 worker1/worker2 고정 |
-| Ingress | dev 전용, `host: dev.kosa.local` | `infra/ingress.yaml` (host 없는 catch-all) |
+| Ingress | `overlays/dev/ingress.yaml`, `host: dev.kosa.local` | `overlays/prod/ingress.yaml`, host 없는 catch-all |
 
 > k8s-manifests 는 단일 브랜치(`dev`)를 유지한다. 환경 구분은 **브랜치가 아니라 overlay 경로/네임스페이스**로 한다.
 > app repo 의 `dev`/`main` push 가 각각 dev/prod overlay 의 이미지 태그를 갱신하고, 두 갱신 모두 k8s-manifests `dev` 브랜치로 커밋된다.
